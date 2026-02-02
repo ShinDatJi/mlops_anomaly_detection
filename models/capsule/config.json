@@ -1,0 +1,97 @@
+{
+  "category": "capsule",
+  "random_state": 42,
+  "patching": true,
+  "preprocessing": {
+    "good_fraction": 0.25,
+    "oversampling": true,
+    "patch_size": 78,
+    "patches": 8,
+    "spread": 0.025,
+    "threshold": "auto",
+    "threshold_factor": 1,
+    "overlap": 0.5,
+    "height_cropping": 2,
+    "width_cropping": 0,
+    "embedding": 0,
+    "fast_patching": false,
+    "random_trans": 0,
+    "random_rot": 0,
+    "random_trans_sub": 0,
+    "random_rot_sub": 0,
+    "fill_mode": "nearest",
+    "fill_mode_sub": "constant",
+    "fill_value": 0
+  },
+  "modeling": {
+    "learning_rate": 0.001,
+    "augmentations": {
+      "flip": false,
+      "rotation": 0,
+      "fill_mode": "constant",
+      "fill_value": 0,
+      "brightness": 0,
+      "contrast": 0,
+      "saturation": [
+        0.5,
+        0.5
+      ],
+      "hue": 0
+    },
+    "center_scaled": true,
+    "conv_blocks": [
+      {
+        "filters": 32,
+        "normalization": false
+      },
+      {
+        "filters": 64,
+        "dropout": 0.1,
+        "normalization": false
+      },
+      {
+        "filters": 128,
+        "dropout": 0.2,
+        "normalization": false
+      },
+      {
+        "filters": 128,
+        "dropout": 0.5,
+        "normalization": false
+      }
+    ],
+    "use_flatten": false,
+    "flatten_dropout": 0.2,
+    "dense_blocks": [
+      {
+        "units": 128,
+        "l2": 0.01,
+        "normalization": false,
+        "dropout": 0
+      }
+    ]
+  },
+  "training": {
+    "batch_size": 32,
+    "validation_from_train": true,
+    "epochs": 50,
+    "class_weight": 0.5,
+    "use_buggy_early_stopping_restore_best_weights": true,
+    "early_stopping": {
+      "min_delta": 0.01,
+      "patience": 5
+    },
+    "reduce_learning_rate_on_plateau": {
+      "min_delta": 0.01,
+      "patience": 3,
+      "factor": 0.25,
+      "cooldown": 2
+    }
+  },
+  "testing": {
+    "test_threshold_mode": "balanced",
+    "train_threshold_mode": "balanced",
+    "patch_threshold_mode": 0.5,
+    "patch_threshold": "max"
+  }
+}

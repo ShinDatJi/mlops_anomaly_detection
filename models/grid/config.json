@@ -1,0 +1,97 @@
+{
+  "category": "grid",
+  "random_state": 42,
+  "patching": true,
+  "preprocessing": {
+    "good_fraction": 0.1,
+    "oversampling": true,
+    "patch_size": 78,
+    "patches": 5,
+    "spread": 0.1,
+    "threshold": "auto",
+    "threshold_factor": 1,
+    "overlap": 0.5,
+    "height_cropping": 0,
+    "width_cropping": 0,
+    "embedding": 0,
+    "fast_patching": true,
+    "random_trans": 0,
+    "random_rot": 0,
+    "random_trans_sub": 0.1,
+    "random_rot_sub": 0.1,
+    "fill_mode": "reflect",
+    "fill_mode_sub": "constant",
+    "fill_value": 0
+  },
+  "modeling": {
+    "learning_rate": 0.001,
+    "augmentations": {
+      "flip": true,
+      "rotation": 0,
+      "fill_mode": "constant",
+      "fill_value": 0,
+      "brightness": 0,
+      "contrast": 0,
+      "saturation": [
+        0.5,
+        0.5
+      ],
+      "hue": 0
+    },
+    "center_scaled": false,
+    "conv_blocks": [
+      {
+        "filters": 32,
+        "normalization": true
+      },
+      {
+        "filters": 64,
+        "dropout": 0.1,
+        "normalization": true
+      },
+      {
+        "filters": 128,
+        "dropout": 0.2,
+        "normalization": true
+      },
+      {
+        "filters": 128,
+        "dropout": 0.5,
+        "normalization": true
+      }
+    ],
+    "use_flatten": false,
+    "flatten_dropout": 0.2,
+    "dense_blocks": [
+      {
+        "units": 128,
+        "l2": 0.01,
+        "normalization": false,
+        "dropout": 0
+      }
+    ]
+  },
+  "testing": {
+    "test_threshold_mode": "balanced",
+    "train_threshold_mode": "balanced",
+    "patch_threshold_mode": 0.05,
+    "patch_threshold": "max"
+  },
+  "training": {
+    "batch_size": 32,
+    "validation_from_train": false,
+    "epochs": 75,
+    "class_weight": 0.5,
+    "use_buggy_early_stopping_restore_best_weights": false,
+    "early_stopping": {
+      "min_delta": 0.01,
+      "patience": 5
+    },
+    "reduce_learning_rate_on_plateau": {
+      "min_delta": 0.01,
+      "patience": 3,
+      "factor": 0.25,
+      "cooldown": 2
+    }
+  }
+}

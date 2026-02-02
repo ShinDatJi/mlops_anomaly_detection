@@ -1,0 +1,8 @@
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/ShinDatJi/mlops_anomaly_detection.git
+git push -u origin main
