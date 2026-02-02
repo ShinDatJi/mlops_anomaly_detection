@@ -170,6 +170,12 @@ wheels = [
 ]
 
 [[package]]
+name = "docopt"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/55/8f8cab2afd404cf578136ef2cc5dfb50baa1761b68c9da1fb1e4eed343c9/docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491", size = 25901, upload-time = "2014-06-16T11:18:57.406Z" }
+
+[[package]]
 name = "flatbuffers"
 version = "25.12.19"
 source = { registry = "https://pypi.org/simple" }
@@ -637,6 +643,11 @@ dependencies = [
     { name = "tensorflow" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "py-make" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "keras", specifier = "==3.12.0" },
@@ -646,6 +657,9 @@ requires-dist = [
     { name = "seaborn", specifier = "==0.13.2" },
     { name = "tensorflow", specifier = "==2.20.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "py-make", specifier = ">=0.1.2" }]
 
 [[package]]
 name = "namex"
@@ -932,6 +946,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c5/f5/65d838092fd01c44d16037953fd4c2cc851e783de9b8f02b27ec4ffd906f/protobuf-6.33.5-cp39-abi3-manylinux2014_s390x.whl", hash = "sha256:8afa18e1d6d20af15b417e728e9f60f3aa108ee76f23c3b2c07a2c3b546d3afd", size = 339411, upload-time = "2026-01-29T21:51:27.446Z" },
     { url = "https://files.pythonhosted.org/packages/9b/53/a9443aa3ca9ba8724fdfa02dd1887c1bcd8e89556b715cfbacca6b63dbec/protobuf-6.33.5-cp39-abi3-manylinux2014_x86_64.whl", hash = "sha256:cbf16ba3350fb7b889fca858fb215967792dc125b35c7976ca4818bee3521cf0", size = 323465, upload-time = "2026-01-29T21:51:28.925Z" },
     { url = "https://files.pythonhosted.org/packages/57/bf/2086963c69bdac3d7cff1cc7ff79b8ce5ea0bec6797a017e1be338a46248/protobuf-6.33.5-py3-none-any.whl", hash = "sha256:69915a973dd0f60f31a08b8318b73eab2bd6a392c79184b3612226b0a3f8ec02", size = 170687, upload-time = "2026-01-29T21:51:32.557Z" },
+]
+
+[[package]]
+name = "py-make"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docopt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/60/69/a18072af4fd4c6d77893843b6704e181342ae74a6aeff5a4b811068cd290/py-make-0.1.2.tar.gz", hash = "sha256:03f9cc7e946adbadaf27c08d03ed329192c680166b734e4a5688dc83abdf9521", size = 15232, upload-time = "2024-02-06T19:44:49.395Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/20/2f60d93edd6b5344e2887eff96704180fe063394180f3933c31ac3f26ac1/py_make-0.1.2-py3-none-any.whl", hash = "sha256:9b14c17b6b72904ad72d57a75e837e546a20020f8778f561d570c8851d513a62", size = 8756, upload-time = "2024-02-06T19:44:47.488Z" },
 ]
 
 [[package]]

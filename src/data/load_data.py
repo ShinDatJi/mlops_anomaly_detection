@@ -1,8 +1,8 @@
 import os
 import pandas as pd
 
-data_dir = "./data/raw"
-output_file = "./data/mad_files.csv"
+data_raw_dir = "./data/raw"
+mad_raw_file = "./data/mad_raw.csv"
 
 # read MAD file structure into a dataframe
 def create_file_db(path):
@@ -167,13 +167,13 @@ def save_database(df):
     print("> remove 'name' columns, reorder columns and save database to disk")
     df = df.drop(columns=["name"]).reset_index(drop=True)
     df = df.loc[:, ["category", "subset", "anomaly", "file"]]
-    df.to_csv(output_file, index=False)
+    df.to_csv(mad_raw_file, index=False)
     print(df.head())
     return df
 
 print("> create file database reading the MVTec AD folder structure")
 
-db = create_file_db(data_dir)
+db = create_file_db(data_raw_dir)
 df = pd.DataFrame(db, columns=["path", "name", "extension", "file"])
 print(df.head())
 

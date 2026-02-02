@@ -4,10 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-mad_file = "./data/mad_files.csv"
-out_file = "./data/mad.csv"
-out_stats_file = "./data/mad_stats.csv"
-plot_dir = "./reports/data/"
+mad_raw_file = "./data/mad_raw.csv"
+mad_file = "./data/mad.csv"
+mad_stats_file = "./data/mad_stats.csv"
+reports_data_dir = "./reports/data/"
 
 def count_images(df):
     df = df.copy()
@@ -26,7 +26,7 @@ def count_images(df):
     ax.bar_label(ax.containers[2], label_type="center", labels=df_plt_sorted["test defective"])
     plt.title("Image count")
     plt.xlabel("count")
-    plt.savefig(plot_dir + "image_count.png")
+    plt.savefig(reports_data_dir + "image_count.png")
     plt.close()
 
 def count_anomalies(df):
@@ -36,7 +36,7 @@ def count_anomalies(df):
     sns.barplot(data=df.sort_values("anomaly", ascending=False), y="category", x = "anomaly", width=0.9)
     plt.title("Anomaly type count")
     plt.xlabel("count")
-    plt.savefig(plot_dir + "anomaly_type_count.png")
+    plt.savefig(reports_data_dir + "anomaly_type_count.png")
     plt.close()
 
 def calc_statistics(df):
@@ -81,7 +81,7 @@ def calc_image_dimensions(df):
     ax.bar_label(ax.containers[0], label_type="edge", padding=-25)
     plt.title("Image size")
     plt.xlabel("size")
-    plt.savefig(plot_dir + "image_size.png")
+    plt.savefig(reports_data_dir + "image_size.png")
     plt.close()
 
     return df
@@ -137,20 +137,20 @@ def calc_mask_coverage(df):
     plt.title("Minimal image size, so that anomalies cover at least " + str(min_pixels) + " pixels of image")
     plt.xlabel("size")
     # plt.legend(bbox_to_anchor=(0, -0.1, 1, -0.1),  loc='upper left', borderaxespad=0, mode="expand", ncols=2)
-    plt.savefig(plot_dir + "min_image_size.png")
+    plt.savefig(reports_data_dir + "min_image_size.png")
     plt.close()
 
     return df
 
 def save_database(df):
-    df.to_csv(out_stats_file)
+    df.to_csv(mad_stats_file)
     df = df.copy()
     print("> save database for modeling")
     df = df[["category", "subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "min_img_size", "file"]]
-    df.to_csv(out_file)
+    df.to_csv(mad_file)
     return df
 
-df = pd.read_csv(mad_file)
+df = pd.read_csv(mad_raw_file)
 print(df.head())
 
 # df = df[(df.category == "bottle") | (df.category == "zipper")].reset_index(drop=True)

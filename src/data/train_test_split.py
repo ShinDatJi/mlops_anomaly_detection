@@ -1,8 +1,8 @@
 import pandas as pd
 
 mad_file = "./data/mad.csv"
-train_file = "./data/mad_train.csv"
-test_file = "./data/mad_test.csv"
+mad_train_file = "./data/mad_train.csv"
+mad_test_file = "./data/mad_test.csv"
 
 random_state = 42
 defect_train_test_split_frac = 0.5
@@ -40,5 +40,5 @@ df_test = df_test.drop("subset", axis=1)
 assert not df_train.file.isin(df_test.file).any(), "no train data should be in test database"
 assert not df_test.file.isin(df_train.file).any(), "no test data should be in train database"
 
-df_train.to_csv(train_file)
-df_test.to_csv(test_file)
+df_train.to_csv(mad_train_file)
+df_test.to_csv(mad_test_file)

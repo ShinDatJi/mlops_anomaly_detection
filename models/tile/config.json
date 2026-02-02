@@ -1,7 +1,6 @@
 {
   "category": "tile",
   "random_state": 42,
-  "patching": true,
   "preprocessing": {
     "good_fraction": 0.25,
     "oversampling": true,
@@ -11,7 +10,6 @@
     "threshold": "full-auto",
     "overlap": 0.5,
     "height_cropping": 0,
-    "embedding": 0,
     "random_trans": 0.25,
     "random_rot": 0.5,
     "random_trans_sub": 0,
@@ -66,7 +64,6 @@
   "training": {
     "batch_size": 32,
     "epochs": 50,
-    "class_weight": 0.5,
     "early_stopping": {
       "min_delta": 0.01,
       "patience": 5
@@ -78,7 +75,7 @@
       "cooldown": 2
     }
   },
-  "testing": {
+  "validation": {
     "test_threshold_mode": "balanced",
     "train_threshold_mode": "balanced",
     "patch_threshold_mode": 0.975,

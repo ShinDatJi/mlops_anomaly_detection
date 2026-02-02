@@ -6,8 +6,8 @@ import seaborn as sns
 import cv2
 import os
 
-mad_file = "./data/mad_stats.csv"
-plot_dir = "./reports/data/"
+mad_stats_file = "./data/mad_stats.csv"
+reports_data_dir = "./reports/data/"
 
 def plot_anomaly_coverage(df):
     print("plot anomaly coverage")
@@ -21,8 +21,8 @@ def plot_anomaly_coverage(df):
         plt.xlabel("anomaly coverage")
         plt.grid()
         plt.tight_layout()
-        os.makedirs(plot_dir + "anomaly_coverage/", exist_ok=True)
-        plt.savefig(plot_dir + "anomaly_coverage/" + category + ".png")
+        os.makedirs(reports_data_dir + "anomaly_coverage/", exist_ok=True)
+        plt.savefig(reports_data_dir + "anomaly_coverage/" + category + ".png")
         plt.close()
 
 def plot_hsv_distribution(df):
@@ -64,8 +64,8 @@ def plot_hsv_distribution(df):
         hsv_barplot(df2, "v")
         plt.suptitle("HSV distribution bar plot for " + category, fontsize=16)
         plt.tight_layout()
-        os.makedirs(plot_dir + "hsv_distribution_bar/", exist_ok=True)
-        plt.savefig(plot_dir + "hsv_distribution_bar/" + category + ".png")
+        os.makedirs(reports_data_dir + "hsv_distribution_bar/", exist_ok=True)
+        plt.savefig(reports_data_dir + "hsv_distribution_bar/" + category + ".png")
         plt.close()
 
         # histplot mean histogram
@@ -78,8 +78,8 @@ def plot_hsv_distribution(df):
         hsv_histplot(df2, "v")
         plt.suptitle("HSV distribution histogram plot for " + category, fontsize=16)
         plt.tight_layout()
-        os.makedirs(plot_dir + "hsv_distribution_histogram/", exist_ok=True)
-        plt.savefig(plot_dir + "hsv_distribution_histogram/" + category + ".png")
+        os.makedirs(reports_data_dir + "hsv_distribution_histogram/", exist_ok=True)
+        plt.savefig(reports_data_dir + "hsv_distribution_histogram/" + category + ".png")
         plt.close()
 
         # stripplot mean distribution
@@ -92,8 +92,8 @@ def plot_hsv_distribution(df):
         hsv_stripplot(df2, "v")
         plt.suptitle("HSV distribution strip plot for " + category, fontsize=16)
         plt.tight_layout()
-        os.makedirs(plot_dir + "hsv_distribution_strip/", exist_ok=True)
-        plt.savefig(plot_dir + "hsv_distribution_strip/" + category + ".png")
+        os.makedirs(reports_data_dir + "hsv_distribution_strip/", exist_ok=True)
+        plt.savefig(reports_data_dir + "hsv_distribution_strip/" + category + ".png")
         plt.close()
 
 def plot_stat_images(df):
@@ -190,11 +190,11 @@ def plot_stat_images(df):
 
         plt.suptitle("Variance images for " + category + "\n", fontsize=16)
         # plt.tight_layout()
-        os.makedirs(plot_dir + "variance-images/", exist_ok=True)
-        plt.savefig(plot_dir + "variance-images/" + category + ".png")
+        os.makedirs(reports_data_dir + "variance-images/", exist_ok=True)
+        plt.savefig(reports_data_dir + "variance-images/" + category + ".png")
         plt.close()
 
-df = pd.read_csv(mad_file, index_col = 0)
+df = pd.read_csv(mad_stats_file, index_col = 0)
 print(df.head())
 
 plot_anomaly_coverage(df)

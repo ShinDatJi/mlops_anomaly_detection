@@ -9,20 +9,24 @@ import pandas as pd
 import create_model
 import visualize_train
 
-data_dir = "./data/processed/"
-model_dir = "./models/"
-report_dir = "./reports/models/"
 category = "bottle"
 
-load_path = model_dir + category + "/"
-with open(load_path + "config.json", "r") as f:
+config_file = f"./models/{category}/config.json"
+preprocessing_report_file = f"./reports/preprocessing/{category}/report.json"
+data_processed_train_dir = f"./data/processed/{category}/train/"
+data_processed_test_dir = f"./data/processed/{category}/test/"
+reports_models_dir = f"./reports/models/{category}/"
+reports_training_dir = f"./reports/training/{category}/"
+training_report_file = f"./reports/training/{category}/report.json"
+
+with open(config_file, "r") as f:
     config = json.load(f)
 
-report_path = report_dir + category + "/temp/"
-with open(report_path + "report.json", "r") as f:
+with open(preprocessing_report_file, "r") as f:
     report = json.load(f)
 
-model_path = model_dir + category + "/"
+Path(reports_models_dir).mkdir(parents=True, exist_ok=True)
+Path(reports_training_dir).mkdir(parents=True, exist_ok=True)
 
 random_state = config["random_state"]
 utils.set_random_seed(random_state)
@@ -33,26 +37,25 @@ report["modeling"] = {}
 rep = report["modeling"]
 rep["params"] = params
 
-if report["patching"]:
-    img_size = report["preprocessing"]["params"]["patch_size"]
-else:
-    img_size = report["preprocessing"]["params"]["image_size"]
-grayscale = report["grayscale"]
+img_size = report["preprocessing"]["params"]["patch_size"]
+grayscale = report["metrics"]["grayscale"]
 
 model = create_model.create_model(**params, img_size=img_size, seed=random_state, grayscale=grayscale)
 model.summary()
 
 # print(json.dumps(report, indent=2))
 
-batch_size = config["training"]["batch_size"]
-if "validation_from_train" in config["training"]:
-    validation_from_train = config["training"]["validation_from_train"]
+
+params = config["training"]
+batch_size = params["batch_size"]
+if "validation_from_train" in params:
+    validation_from_train = params["validation_from_train"]
 else:
     validation_from_train = False
 
 if validation_from_train:
     ds_train, ds_val = image_dataset_from_directory(
-        directory = data_dir + category + "/train",
+        directory = data_processed_train_dir,
         image_size=(img_size, img_size),
         validation_split = 0.2,
         subset = "both",
@@ -64,7 +67,7 @@ if validation_from_train:
     )
 else:
     ds_train = image_dataset_from_directory(
-        directory = data_dir + category + "/train",
+        directory = data_processed_train_dir,
         image_size=(img_size, img_size),
         seed = random_state,
         batch_size = batch_size,
@@ -73,7 +76,7 @@ else:
         color_mode = "grayscale" if grayscale else "rgb"
     )
     ds_val = image_dataset_from_directory(
-        directory = data_dir + category + "/test",
+        directory = data_processed_test_dir,
         image_size=(img_size, img_size),
         seed = random_state,
         batch_size = batch_size,
@@ -86,27 +89,25 @@ epoch_sum = 0
 
 monitor = "val_loss" if validation_from_train else "loss"
 
-early_stopping_params = config["training"]["early_stopping"]
-if "use_buggy_early_stopping_restore_best_weights" in config["training"]:
-    use_buggy_early_stopping_restore_best_weights = config["training"]["use_buggy_early_stopping_restore_best_weights"]
+early_stopping_params = params["early_stopping"]
+if "use_buggy_early_stopping_restore_best_weights" in params:
+    use_buggy_early_stopping_restore_best_weights = params["use_buggy_early_stopping_restore_best_weights"]
 else:
     use_buggy_early_stopping_restore_best_weights = False
-restore_best = True if use_buggy_early_stopping_restore_best_weights else False
+restore_best = use_buggy_early_stopping_restore_best_weights
 early_stopping = callbacks.EarlyStopping(monitor=monitor, restore_best_weights=restore_best, verbose=1, **early_stopping_params)
 
-reduce_lr_params = config["training"]["reduce_learning_rate_on_plateau"]
+reduce_lr_params = params["reduce_learning_rate_on_plateau"]
 reduce_lr = callbacks.ReduceLROnPlateau(monitor=monitor, verbose=1, **reduce_lr_params)
 
 file_name = "model_{epoch}.keras" if use_buggy_early_stopping_restore_best_weights else "model.keras"
-model_checkpoint = callbacks.ModelCheckpoint(model_path + file_name, monitor=monitor, verbose=0, save_best_only=True, save_freq="epoch")
+model_checkpoint = callbacks.ModelCheckpoint(reports_models_dir + file_name, monitor=monitor, verbose=0, save_best_only=True, save_freq="epoch")
 
-epochs = config["training"]["epochs"]
-class_weight = config["training"]["class_weight"]
+epochs = params["epochs"]
+# epochs = 1
 print("overall epochs", epoch_sum)
 
-# model_history = model.fit(ds_train, validation_data=ds_val, epochs=epochs, class_weight={0: 1 - class_weight, 1: class_weight})
 model_history = model.fit(ds_train, validation_data=ds_val, epochs=epochs, callbacks=[early_stopping, reduce_lr, model_checkpoint])
-# model_history = model.fit(ds_train, epochs=epochs, callbacks=[early_stopping])
 
 # epochs = len(model_history.epoch)
 epoch_sum += len(model_history.epoch)
@@ -116,12 +117,12 @@ if use_buggy_early_stopping_restore_best_weights:
 else:
     best_epoch = int(np.argmin(model_history.history["loss"])) + 1
 print(best_epoch)
-visualize_train.plot_history(model_history.history, best_epoch, len(model_history.epoch), report_path + "0_training_", validation_from_train)
+visualize_train.plot_history(model_history.history, best_epoch, len(model_history.epoch), reports_training_dir + "training_", validation_from_train)
 
 if use_buggy_early_stopping_restore_best_weights:
-    early_stopping_best_model = saving.load_model(model_path + "model_{}.keras".format(best_epoch))
-    saving.save_model(early_stopping_best_model, model_path + "model.keras", overwrite=True)
-    files = Path(model_path).glob("model_*.keras")
+    early_stopping_best_model = saving.load_model(reports_models_dir + "model_{}.keras".format(best_epoch))
+    saving.save_model(early_stopping_best_model, reports_models_dir + "model.keras", overwrite=True)
+    files = Path(reports_models_dir).glob("model_*.keras")
     for f in files:
         f.unlink()
 
@@ -130,20 +131,13 @@ df_history["epoch"] = model_history.epoch
 df_history.epoch += 1
 df_history["validation_set"] = "train_split" if validation_from_train else "test"
 df_history["monitor"] = "val_loss" if validation_from_train else "loss"
-df_history.to_csv(report_path + "0_training_history.csv")
-
-params = {}
-params["batch_size"] = batch_size
-params["validation_from_train"] = validation_from_train
-params["epochs"] = epochs
-params["class_weight"] = class_weight
-params["use_buggy_early_stopping_restore_best_weights"] = use_buggy_early_stopping_restore_best_weights
-params["early_stopping"] = early_stopping_params
-params["reduce_learning_rate_on_plateau"] = reduce_lr_params
+df_history.to_csv(reports_training_dir + "training_history.csv")
 
 report["training"] = {}
 rep = report["training"]
 rep["params"] = params
+rep["metrics"] = {}
+rep = rep["metrics"]
 rep["epochs"] = len(model_history.epoch)
 rep["best_epoch"] = best_epoch
 rep["scores"] = {
@@ -155,5 +149,8 @@ rep["scores"] = {
 
 # print(json.dumps(report["training"], indent=2))
 
-with open(report_path + "report.json", mode="w") as f:
+with open(training_report_file, mode="w") as f:
     json.dump(report, f, indent=2)
+
+with open(reports_models_dir + "config.json", mode="w") as f:
+    json.dump(config, f, indent=2)
