@@ -3,9 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import cv2
+import os
 import evaluate_simple
 
-def plot_false_predictions(df_predict, df_predict_patch, patches, patches_x, patches_y, threshold, report_path=None):
+def plot_false_predictions(df_predict, df_predict_patch, patches_x, patches_y, threshold, report_path=None):
     patched_pred_proba = df_predict_patch.pred_proba.values.reshape((-1, patches_x * patches_y))
     plt.figure(figsize=(10,4))
     plt.subplot(1, 2, 1)
@@ -38,7 +39,7 @@ def plot_false_predictions(df_predict, df_predict_patch, patches, patches_x, pat
 
     plt.tight_layout()
     if report_path:
-        plt.savefig(report_path + "false_predictions.png")
+        plt.savefig(os.path.join(report_path, "false_predictions.png"))
     plt.close()
 
 def plot_mean_probabilites(df_predict_patch, one_line, patches, patches_x, patches_y, threshold, report_path=None):
@@ -92,7 +93,7 @@ def plot_mean_probabilites(df_predict_patch, one_line, patches, patches_x, patch
 
     plt.tight_layout()
     if report_path:
-        plt.savefig(report_path + "mean_probabilities.png", bbox_inches="tight")
+        plt.savefig(os.path.join(report_path, "mean_probabilities.png"), bbox_inches="tight")
     plt.close()
 
 def plot_probabilities(df_predict_patch, one_line_patch, threshold, report_path=None):
@@ -111,7 +112,7 @@ def plot_probabilities(df_predict_patch, one_line_patch, threshold, report_path=
     plt.title("Sorted prediction probabilities")
     # plt.legend()
     if report_path:
-        plt.savefig(report_path + "prediction_probabilities.png")
+        plt.savefig(os.path.join(report_path, "prediction_probabilities.png"))
     plt.close()
 
 def plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, patches_x, patches_y, threshold, report_path=None):
@@ -176,7 +177,7 @@ def plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, p
             plot_patches(2, 2 + fp_count, img, i, "FP")
     plt.tight_layout()
     if report_path:
-        plt.savefig(report_path + "patching.png")
+        plt.savefig(os.path.join(report_path, "patching.png"))
     plt.close()
 
 def predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_size, patches, patches_x, patches_y, patch_images):
@@ -208,15 +209,15 @@ def predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_s
 
     return df_predict, one_line, test_images
 
-def test_model(data_dir, model, category, subset, img_size, batch_size, threshold, df_test, patches, patches_x, patches_y, patch_threshold, report_path=None, grayscale=False):
-    ds_test, patch_images, test_real = evaluate_simple.load_data(data_dir, category, subset, img_size, batch_size, grayscale)
+def test_model(data_dir, model, img_size, batch_size, threshold, df_test, patches, patches_x, patches_y, patch_threshold, report_path=None, grayscale=False):
+    ds_test, patch_images, test_real = evaluate_simple.load_data(data_dir, img_size, batch_size, grayscale)
     df_predict_patch, one_line_patch, threshold = evaluate_simple.predict(ds_test, model, test_real, threshold)
     df_predict, one_line, test_images = predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_size, patches, patches_x, patches_y, patch_images)
 
     evaluate_simple.display_metrics(df_predict, threshold, report_path)
     metrics = evaluate_simple.get_metrics(df_predict, pred_proba_scores=False)
 
-    plot_false_predictions(df_predict, df_predict_patch, patches, patches_x, patches_y, threshold, report_path)
+    plot_false_predictions(df_predict, df_predict_patch, patches_x, patches_y, threshold, report_path)
     plot_mean_probabilites(df_predict_patch, one_line, patches, patches_x, patches_y, threshold, report_path)
     plot_probabilities(df_predict_patch, one_line_patch, threshold, report_path)
     plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, patches_x, patches_y, threshold, report_path)

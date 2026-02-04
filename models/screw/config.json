@@ -1,6 +1,7 @@
 {
   "category": "screw",
   "random_state": 42,
+  "train_test_split": 0.5,
   "preprocessing": {
     "good_fraction": 1,
     "oversampling": true,
@@ -8,8 +9,11 @@
     "patches": 2,
     "spread": 0.025,
     "threshold": "full-auto",
+    "threshold_factor": 1,
     "overlap": 0.5,
     "height_cropping": 0,
+    "width_cropping": 0,
+    "fast_patching": true,
     "random_trans": 0,
     "random_rot": 0.5,
     "random_trans_sub": 0,

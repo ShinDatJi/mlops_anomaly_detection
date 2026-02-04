@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plot_history(history, best_epoch, epochs, report_path, validation_from_train):
+def plot_history(history, best_epoch, epochs, out_file, validation_from_train):
     plt.figure(figsize=(8,4))
     plt.subplot(1, 2, 1)
     plt.plot(range(1, epochs + 1), history["loss"], label="train set")
@@ -56,6 +56,6 @@ def plot_history(history, best_epoch, epochs, report_path, validation_from_train
     # plt.title("PR AUC")
 
     plt.tight_layout()
-    if report_path:
-        plt.savefig(report_path + "history.png")
+    if out_file:
+        plt.savefig(out_file)
     plt.close()

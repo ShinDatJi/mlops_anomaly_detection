@@ -1,0 +1,176 @@
+{
+  "category": "transistor",
+  "random_state": 42,
+  "img_size": 1024,
+  "grayscale": false,
+  "patching": true,
+  "preprocessing": {
+    "params": {
+      "good_fraction": 1,
+      "oversampling": true,
+      "patch_size": 78,
+      "patches": 2,
+      "spread": 0.025,
+      "threshold": "full-auto",
+      "overlap": 0.25,
+      "height_cropping": 0,
+      "width_cropping": 0,
+      "embedding": 0,
+      "random_trans": 0.05,
+      "random_rot": 0,
+      "random_trans_sub": 0,
+      "random_rot_sub": 0,
+      "fill_mode": "nearest",
+      "fill_mode_sub": "constant",
+      "fill_value": 0
+    },
+    "threshold": 0.007,
+    "train_images": {
+      "images_good_source": 213,
+      "images_bad_source": 20,
+      "oversampling": 21,
+      "images_good": 882,
+      "images_bad": 901
+    },
+    "test_images": {
+      "images_good_source": 60,
+      "images_bad_source": 20,
+      "oversampling": 0,
+      "images_good": 240,
+      "images_bad": 50
+    },
+    "test_patching_images": {
+      "images_good_source": 60,
+      "images_bad_source": 20,
+      "oversampling": 0,
+      "images_good": 240,
+      "images_bad": 80
+    }
+  },
+  "modeling": {
+    "params": {
+      "learning_rate": 0.001,
+      "augmentations": {
+        "flip": "horizontal",
+        "rotation": 0,
+        "fill_mode": "constant",
+        "fill_value": 0,
+        "brightness": 0.1,
+        "contrast": 0.1,
+        "saturation": [
+          0.45,
+          0.55
+        ],
+        "hue": 0.1
+      },
+      "center_scaled": false,
+      "conv_blocks": [
+        {
+          "filters": 32,
+          "normalization": false
+        },
+        {
+          "filters": 64,
+          "dropout": 0.1,
+          "normalization": false
+        },
+        {
+          "filters": 128,
+          "dropout": 0.2,
+          "normalization": false
+        },
+        {
+          "filters": 128,
+          "dropout": 0.5,
+          "normalization": false
+        }
+      ],
+      "use_flatten": false,
+      "flatten_dropout": 0.2,
+      "dense_blocks": [
+        {
+          "units": 128,
+          "l2": 0.01,
+          "normalization": false,
+          "dropout": 0
+        }
+      ]
+    }
+  },
+  "training": {
+    "params": {
+      "batch_size": 32,
+      "validation_from_train": false,
+      "epochs": 50,
+      "class_weight": 0.5,
+      "use_buggy_early_stopping_restore_best_weights": false,
+      "early_stopping": {
+        "min_delta": 0.01,
+        "patience": 5
+      },
+      "reduce_learning_rate_on_plateau": {
+        "min_delta": 0.01,
+        "patience": 3,
+        "factor": 0.25,
+        "cooldown": 2
+      }
+    },
+    "epochs": 47,
+    "best_epoch": 42,
+    "scores": {
+      "accuracy": 0.994,
+      "loss": 0.0323,
+      "val_accuracy": 0.914,
+      "val_loss": 0.3258
+    }
+  },
+  "testing": {
+    "test": {
+      "threshold_mode": "balanced",
+      "threshold": 0.1,
+      "metrics": {
+        "tp": 38,
+        "tn": 228,
+        "fp": 12,
+        "fn": 12,
+        "accuracy": 0.917,
+        "precision": 0.76,
+        "recall": 0.76,
+        "f1_score": 0.76,
+        "AUC": 0.886,
+        "AP": 0.77
+      }
+    },
+    "train": {
+      "threshold_mode": "balanced",
+      "threshold": 0.12,
+      "metrics": {
+        "tp": 899,
+        "tn": 880,
+        "fp": 2,
+        "fn": 2,
+        "accuracy": 0.998,
+        "precision": 0.998,
+        "recall": 0.998,
+        "f1_score": 0.998,
+        "AUC": 1.0,
+        "AP": 1.0
+      }
+    },
+    "test_patching": {
+      "threshold_mode": 0.5,
+      "threshold": 0.5,
+      "patch_threshold": "max",
+      "metrics": {
+        "tp": 16,
+        "tn": 57,
+        "fp": 3,
+        "fn": 4,
+        "accuracy": 0.912,
+        "precision": 0.842,
+        "recall": 0.8,
+        "f1_score": 0.821
+      }
+    }
+  }
+}

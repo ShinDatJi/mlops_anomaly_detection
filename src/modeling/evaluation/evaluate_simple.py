@@ -4,10 +4,9 @@ import tensorflow as tf
 from keras.models import Model
 from keras.utils import image_dataset_from_directory
 from sklearn import metrics as skmetrics
-import sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
-# import shap.maskers as maskers
+import os
 
 def display_metrics(df_predict, threshold, report_path=None):
     # print(df_predict)
@@ -45,7 +44,7 @@ def display_metrics(df_predict, threshold, report_path=None):
 
     plt.tight_layout()
     if report_path:
-        plt.savefig(report_path + "confusion_matrix.png")
+        plt.savefig(os.path.join(report_path, "confusion_matrix.png"))
     plt.close()
 
     # print(skmetrics.classification_report(df_predict.real, df_predict.pred))
@@ -106,7 +105,7 @@ def plot_probabilities(df_predict, threshold, report_path):
 
     plt.tight_layout(pad=2.0)
     if report_path:
-        plt.savefig(report_path + "prediction_probabilities.png", bbox_inches="tight")
+        plt.savefig(os.path.join(report_path, "prediction_probabilities.png"), bbox_inches="tight")
     plt.close()
 
 def plot_grad_cam(model, df_predict, threshold, images, block_count, report_path, grayscale):
@@ -178,58 +177,13 @@ def plot_grad_cam(model, df_predict, threshold, images, block_count, report_path
             plot_grad_cam(6 + fp_count, img, i, "FP")
     plt.tight_layout()
     if report_path:
-        plt.savefig(report_path + "grad_cam.png")
+        plt.savefig(os.path.join(report_path, "grad_cam.png"))
     plt.close()
 
-# def plot_shap(model, df_predict, images, img_size, report_path, grayscale):
-#     tp_count = 0
-#     fp_count = 0
-#     tn_count = 0
-#     fn_count = 0
-#     tp_images = []
-#     fp_images = []
-#     tn_images = []
-#     fn_images = []
-#     tp_labels = []
-#     fp_labels = []
-#     tn_labels = []
-#     fn_labels = []
-
-#     for i in np.random.permutation(len(images)):
-#         img = images[i]
-#         if (tp_count < 2) & (df_predict.real[i] == 1) & (df_predict.pred[i] == 1):
-#             tp_count += 1
-#             tp_images.append(img)
-#             tp_labels.append("TP")
-#         if (fn_count < 2) & (df_predict.real[i] == 1) & (df_predict.pred[i] == 0):
-#             fn_count += 1
-#             fn_images.append(img)
-#             fn_labels.append("FN")
-#         if (tn_count < 2) & (df_predict.real[i] == 0) & (df_predict.pred[i] == 0):
-#             tn_count += 1
-#             tn_images.append(img)
-#             tn_labels.append("TN")
-#         if (fp_count < 2) & (df_predict.real[i] == 0) & (df_predict.pred[i] == 1):
-#             fp_count += 1
-#             fp_images.append(img)
-#             fp_labels.append("FP")
-
-#     shap_images = np.array(tp_images + fn_images + tn_images + fp_images).astype("uint8")
-#     shap_labels = tp_labels + fn_labels + tn_labels + fp_labels
-#     masker = shap.maskers.Image("inpaint_telea", (img_size, img_size, 1 if grayscale else 3))
-#     explainer = shap.Explainer(model, masker)
-#     shap_values = explainer(shap_images, max_evals=500)
-#     shap.plots.image(shap_values, show=False, true_labels=shap_labels)
-
-#     if report_path:
-#         plt.savefig(report_path + "shap.png")
-#     # plt.tight_layout()
-#     plt.show()
-
-def load_data(data_dir, category, subset, img_size, batch_size, grayscale):
+def load_data(data_dir, img_size, batch_size, grayscale):
 
     ds_test = image_dataset_from_directory(
-        directory = data_dir + category + "/" + subset,
+        directory = data_dir,
         image_size=(img_size, img_size),
         batch_size = batch_size,
         shuffle = False,
@@ -286,15 +240,14 @@ def predict(ds_test, model, test_real, threshold_mode):
 
     return df_predict, one_line, threshold
 
-def test_model(data_dir, model, category, subset, img_size, batch_size, block_count, threshold_mode="balanced", report_path=None, grayscale=False):
+def test_model(data_dir, model, img_size, batch_size, block_count, threshold_mode="balanced", report_path=None, grayscale=False):
 
-    ds_test, test_images, test_real = load_data(data_dir, category, subset, img_size, batch_size, grayscale)
+    ds_test, test_images, test_real = load_data(data_dir, img_size, batch_size, grayscale)
     df_predict, one_line, threshold = predict(ds_test, model, test_real, threshold_mode)
 
     display_metrics(df_predict, threshold, report_path)
     plot_probabilities(df_predict, threshold, report_path)
     plot_grad_cam(model, df_predict, threshold, test_images, block_count, report_path, grayscale)
-    # plot_shap(model, df_predict, test_images, img_size, report_path, grayscale)
 
     metrics = get_metrics(df_predict)
     

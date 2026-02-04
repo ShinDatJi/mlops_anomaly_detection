@@ -1,0 +1,170 @@
+{
+  "category": "carpet",
+  "random_state": 42,
+  "img_size": 1024,
+  "grayscale": false,
+  "patching": true,
+  "preprocessing": {
+    "params": {
+      "good_fraction": 0.25,
+      "oversampling": true,
+      "patch_size": 78,
+      "patches": 5,
+      "spread": 0.025,
+      "threshold": "auto",
+      "threshold_factor": 1,
+      "overlap": 0.5,
+      "height_cropping": 0,
+      "width_cropping": 0,
+      "embedding": 0,
+      "fast_patching": true,
+      "random_trans": 0.5,
+      "random_rot": 0.5,
+      "random_trans_sub": 0,
+      "random_rot_sub": 0,
+      "fill_mode": "reflect",
+      "fill_mode_sub": "constant",
+      "fill_value": 0
+    },
+    "threshold": 0.066,
+    "train_images": {
+      "images_good_source": 280,
+      "images_bad_source": 44,
+      "oversampling": 28,
+      "images_good": 2675,
+      "images_bad": 2690
+    },
+    "test_images": {
+      "images_good_source": 28,
+      "images_bad_source": 45,
+      "oversampling": 0,
+      "images_good": 700,
+      "images_bad": 147
+    },
+    "test_patching_images": {
+      "images_good_source": 28,
+      "images_bad_source": 45,
+      "oversampling": 0,
+      "images_good": 700,
+      "images_bad": 1125
+    }
+  },
+  "modeling": {
+    "params": {
+      "learning_rate": 0.001,
+      "augmentations": {
+        "flip": false,
+        "rotation": 0,
+        "fill_mode": "constant",
+        "fill_value": 0,
+        "brightness": 0.1,
+        "contrast": 0.1,
+        "saturation": 0.1,
+        "hue": 0.1
+      },
+      "center_scaled": false,
+      "conv_blocks": [
+        {
+          "filters": 32,
+          "normalization": false
+        },
+        {
+          "filters": 64,
+          "dropout": 0.1,
+          "normalization": false
+        },
+        {
+          "filters": 128,
+          "dropout": 0.2,
+          "normalization": false
+        }
+      ],
+      "use_flatten": false,
+      "flatten_dropout": 0.2,
+      "dense_blocks": [
+        {
+          "units": 128,
+          "l2": 0.01,
+          "normalization": false,
+          "dropout": 0
+        }
+      ]
+    }
+  },
+  "training": {
+    "params": {
+      "batch_size": 32,
+      "validation_from_train": false,
+      "epochs": 50,
+      "class_weight": 0.5,
+      "use_buggy_early_stopping_restore_best_weights": false,
+      "early_stopping": {
+        "min_delta": 0.01,
+        "patience": 5
+      },
+      "reduce_learning_rate_on_plateau": {
+        "min_delta": 0.01,
+        "patience": 3,
+        "factor": 0.25,
+        "cooldown": 2
+      }
+    },
+    "epochs": 33,
+    "best_epoch": 32,
+    "scores": {
+      "accuracy": 0.937,
+      "loss": 0.1759,
+      "val_accuracy": 0.961,
+      "val_loss": 0.1564
+    }
+  },
+  "testing": {
+    "test": {
+      "threshold_mode": "balanced",
+      "threshold": 0.21,
+      "metrics": {
+        "tp": 127,
+        "tn": 680,
+        "fp": 20,
+        "fn": 20,
+        "accuracy": 0.953,
+        "precision": 0.864,
+        "recall": 0.864,
+        "f1_score": 0.864,
+        "AUC": 0.974,
+        "AP": 0.944
+      }
+    },
+    "train": {
+      "threshold_mode": "balanced",
+      "threshold": 0.22,
+      "metrics": {
+        "tp": 2553,
+        "tn": 2538,
+        "fp": 137,
+        "fn": 137,
+        "accuracy": 0.949,
+        "precision": 0.949,
+        "recall": 0.949,
+        "f1_score": 0.949,
+        "AUC": 0.989,
+        "AP": 0.99
+      }
+    },
+    "test_patching": {
+      "threshold_mode": 0.5,
+      "threshold": 0.5,
+      "patch_threshold": "max",
+      "metrics": {
+        "tp": 45,
+        "tn": 28,
+        "fp": 0,
+        "fn": 0,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0
+      }
+    }
+  }
+}

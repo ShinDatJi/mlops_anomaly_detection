@@ -1,27 +1,27 @@
-from pathlib import Path
 import os
 import cv2
 import numpy as np
 import keras.layers as layers
 
-def prepare_folders(data_dir, subpath, category):
-    path = data_dir + category + "/" + subpath + "/"
-    Path(path + "0/").mkdir(parents=True, exist_ok=True)
-    Path(path + "1/").mkdir(parents=True, exist_ok=True)
-    for f in os.listdir(path + "0/"):
-        os.remove(path + "0/" + f)
-    for f in os.listdir(path + "1/"):
-        os.remove(path + "1/" + f)
-    return path
+def prepare_folders(data_dir):
+    path0 = os.path.join(data_dir, "0")
+    path1 = os.path.join(data_dir, "1")
+    os.makedirs(path0, exist_ok=True)
+    os.makedirs(path1, exist_ok=True)
+    for e in os.scandir(path0):
+        os.remove(e.path)
+    for e in os.scandir(path1):
+        os.remove(e.path)
+    return path0, path1
 
 def create_patches(
-        data_dir, df, subpath, patch_size, patches, good_fraction=False,
+        data_dir, df, patch_size, patches, good_fraction=False,
         oversampling=False, keep_all=False, keep_good=False, spread=0.1, threshold="auto", threshold_factor=1, overlap=0,
         height_cropping=0, width_cropping=0, fast_patching=True,
         random_trans=0, random_rot=0, random_trans_sub=0, random_rot_sub=0,
         fill_mode="reflect", fill_mode_sub="reflect", fill_value=0, seed=None):
 
-    path = prepare_folders(data_dir, subpath, df.category.iloc[0])
+    path0, path1 = prepare_folders(data_dir)
     img_size = df.img_size.iloc[0]
 
     step = int(img_size / (patches + overlap / (1 - overlap)))
@@ -36,7 +36,7 @@ def create_patches(
     
     rng = np.random.default_rng(seed)
 
-    print(subpath)
+    print(data_dir)
     count_0 = 0
     for i in df[df.anomaly == "good"].index:
         img = cv2.imread(df.loc[i].file)
@@ -60,7 +60,8 @@ def create_patches(
                     patch = rot_sub(patch)
                 if random_rot_sub or random_trans_sub:
                     patch = patch.numpy()
-                cv2.imwrite(path + "0/" + str(i).zfill(4) + "_" + str(r).zfill(4) + "_" + str(c).zfill(4) + ".png", patch)
+                file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
+                cv2.imwrite(os.path.join(path0, file), patch)
                 count_0 += 1
     print("  0 patches:", count_0)
 
@@ -128,11 +129,13 @@ def create_patches(
                         patch = patch.numpy()
                         mask_patch = mask_patch.numpy()
                     if mask_patch.mean() >= threshold: 
-                        cv2.imwrite(path + "1/" + str(i).zfill(4) + "_" + str(count).zfill(3) + "_" + str(r).zfill(4) + "_" + str(c).zfill(4) + ".png", patch)
+                        file = f"{str(i).zfill(4)}_{str(count).zfill(3)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
+                        cv2.imwrite(os.path.join(path1, file), patch)
                         count_1 += 1
                         stats[df.loc[i].anomaly] += 1
                     elif keep_good and count == 0 and mask_patch.mean() == 0:
-                        cv2.imwrite(path + "0/" + str(i).zfill(4) + "_" + str(r).zfill(4) + "_" + str(c).zfill(4) + ".png", patch)
+                        file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
+                        cv2.imwrite(os.path.join(path0, file), patch)
                         count_0 += 1
         if keep_good and count == 0:
             print("  0 patches:", count_0)

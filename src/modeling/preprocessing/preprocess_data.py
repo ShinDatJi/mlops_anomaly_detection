@@ -1,29 +1,27 @@
-from pathlib import Path
 import numpy as np
 import json
 import pandas as pd
 import keras.utils as utils
+import os
 import create_patches
 
-category = "bottle"
-
-config_file = f"./models/{category}/config.json"
-mad_train_file = "./data/mad_train.csv"
-mad_test_file = "./data/mad_test.csv"
-data_processed_dir = "./data/processed/"
-reports_preprocessing_dir = f"./reports/preprocessing/{category}/"
-preprocessing_report_file = f"./reports/preprocessing/{category}/report.json"
+category = os.environ["CATEGORY"]
+config_file = os.environ["CONFIG_FILE"]
+data_train_file = os.environ["DATA_TRAIN_FILE"]
+data_test_file = os.environ["DATA_TEST_FILE"]
+data_train_dir = os.environ["DATA_TRAIN_DIR"]
+data_test_dir = os.environ["DATA_TEST_DIR"]
+data_test_patching_dir = os.environ["DATA_TEST_PATCHING_DIR"]
+reports_dir = os.environ["REPORTS_DIR"]
+preprocessing_report_file = os.environ["PREPROCESSING_REPORT_FILE"]
 
 with open(config_file, "r") as f:
     config = json.load(f)
 
-Path(reports_preprocessing_dir).mkdir(parents=True, exist_ok=True)
+os.makedirs(reports_dir, exist_ok=True)
 
-df_train = pd.read_csv(mad_train_file, index_col=0)
-df_test = pd.read_csv(mad_test_file, index_col=0)
-
-df_train = df_train[df_train.category == category].copy()
-df_test = df_test[df_test.category == category].copy()
+df_train = pd.read_csv(data_train_file, index_col=0)
+df_test = pd.read_csv(data_test_file, index_col=0)
 
 random_state = config["random_state"]
 
@@ -32,16 +30,16 @@ utils.set_random_seed(random_state)
 grayscale = bool(df_train.grayscale.iloc[0])
 
 report = {}
+report["category"] = category
 report["params"] = {}
 rep = report["params"]
-rep["category"] = category
 rep["random_state"] = random_state
 report["metrics"] = {}
 rep = report["metrics"]
 rep["img_size"] = int(df_train.img_size.iloc[0])
 rep["grayscale"] = grayscale
 
-print(json.dumps(report, indent=2))
+# print(json.dumps(report, indent=2))
 
 report["preprocessing"] = {}
 rep = report["preprocessing"]
@@ -50,7 +48,7 @@ params = config["preprocessing"]
 rep["params"] = params
 rep["metrics"] = {}
 rep = rep["metrics"]
-image_counts, threshold = create_patches.create_patches(data_processed_dir, df_train, "train", keep_good=True, seed=random_state, **params)
+image_counts, threshold = create_patches.create_patches(data_train_dir, df_train, keep_good=True, seed=random_state, **params)
 rep["threshold"] = float(np.round(threshold, 3))
 rep["train_images"] = image_counts
 
@@ -63,9 +61,9 @@ params["random_rot"] = False
 params["random_trans_sub"] = False
 params["random_rot_sub"] = False
 
-image_counts, threshold = create_patches.create_patches(data_processed_dir, df_test, "test", seed=random_state, **params)
+image_counts, threshold = create_patches.create_patches(data_test_dir, df_test, seed=random_state, **params)
 rep["test_images"] = image_counts
-image_counts, threshold = create_patches.create_patches(data_processed_dir, df_test, "test_patching", keep_all=True, seed=random_state, **params)
+image_counts, threshold = create_patches.create_patches(data_test_patching_dir, df_test, keep_all=True, seed=random_state, **params)
 rep["test_patching_images"] = image_counts
 
 print()

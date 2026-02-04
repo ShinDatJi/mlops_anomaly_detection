@@ -3,11 +3,14 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
-mad_raw_file = "./data/mad_raw.csv"
-mad_file = "./data/mad.csv"
-mad_stats_file = "./data/mad_stats.csv"
-reports_data_dir = "./reports/data/"
+data_raw_file = os.environ["DATA_RAW_FILE"]
+data_clean_file = os.environ["DATA_CLEAN_FILE"]
+data_stats_file = os.environ["DATA_STATS_FILE"]
+reports_dir = os.environ["REPORTS_DIR"]
+
+os.makedirs(reports_dir, exist_ok=True)
 
 def count_images(df):
     df = df.copy()
@@ -15,35 +18,22 @@ def count_images(df):
     df.loc[df.subset == "train", "type"] = "train good"
     df.loc[(df.subset == "test") & (df.anomaly == "good"), "type"] = "test good"
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "type"] = "test defective"
-    df_plt = df.groupby(["category", "type"]).agg({"file":"count"}).unstack()
-    df_plt.columns = df_plt.columns.droplevel()
-    df_plt = df_plt.loc[:, ["train good", "test good", "test defective"]]
-    df_plt_sorted = df_plt.sort_values("train good")
+    df_plt = df.groupby(["type"]).agg({"file":"count"})
+    df_plt_sorted = df_plt.sort_index(ascending=False)
     print((df_plt_sorted))
-    ax = df_plt_sorted.plot(kind="barh", stacked=True, figsize=(10,8), layout="constrained", color=["tab:blue", "tab:green", "tab:orange"], width=0.9)
-    ax.bar_label(ax.containers[0], label_type="center")
-    ax.bar_label(ax.containers[1], label_type="center", labels=df_plt_sorted["test good"])
-    ax.bar_label(ax.containers[2], label_type="center", labels=df_plt_sorted["test defective"])
+    plt.figure(figsize=(7, 5), layout="constrained")
+    sns.barplot(df_plt_sorted, x=df_plt_sorted.file, y=df_plt_sorted.index)
     plt.title("Image count")
     plt.xlabel("count")
-    plt.savefig(reports_data_dir + "image_count.png")
-    plt.close()
-
-def count_anomalies(df):
-    df = df.copy()
-    df = df[df.subset == "ground_truth"].groupby(["category"]).agg({"anomaly": "nunique"})
-    print(df)
-    sns.barplot(data=df.sort_values("anomaly", ascending=False), y="category", x = "anomaly", width=0.9)
-    plt.title("Anomaly type count")
-    plt.xlabel("count")
-    plt.savefig(reports_data_dir + "anomaly_type_count.png")
+    plt.ylabel("subset")
+    plt.savefig(os.path.join(reports_dir, "image_count.png"))
     plt.close()
 
 def calc_statistics(df):
     df = df.copy()
     print("\n> load images and amend database with dimensions and statistics")
     for i in range(len(df)):
-        if i % 500 == 0:
+        if i % 50 == 0:
             print("loaded:", i, "/", len(df))
         im = cv2.imread(df.file[i])
         img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
@@ -65,24 +55,17 @@ def calc_statistics(df):
 
 def calc_image_dimensions(df):
     df = df.copy()
-    print("\n> check image dimensions per category")
-    cat_size = df.groupby("category").agg({"width": "unique", "height": "unique"})
-    cat_size["quadratic"] = cat_size.width == cat_size.height
-    print(cat_size)
-    assert cat_size["quadratic"].all(), "all images should be quadratic"
-    print("Images are all quadratic but have different dimensions per category.")
+    print("\n> check image dimensions")
+    df_dim = df.agg({"width": "unique", "height": "unique"})
+    df_dim["quadratic"] = df_dim.width == df_dim.height
+    print(df_dim)
+    assert df_dim["quadratic"].all(), "all images should be quadratic"
+    print("Images are all quadratic.")
 
     print("\n> add size column and drop width and height column")
     df["width"] = df["width"].astype("int")
     df = df.rename(columns = {"width": "img_size"})
     df = df.drop(columns = ["height"])
-
-    ax = sns.barplot(y = df.category, x = df.img_size, width=0.9)
-    ax.bar_label(ax.containers[0], label_type="edge", padding=-25)
-    plt.title("Image size")
-    plt.xlabel("size")
-    plt.savefig(reports_data_dir + "image_size.png")
-    plt.close()
 
     return df
 
@@ -96,17 +79,12 @@ def calc_image_color(df):
     assert group_subset_grayscale.loc["ground_truth"], "all 'ground_truth' images should be grayscale"
     print("All ground_truth images are grayscale.")
 
-    print("\n> check if images are grayscale per category")
-    df_cat = df[df.subset != "ground_truth"].groupby("category").grayscale.all()
-    print(df_cat[df_cat])
-    assert df_cat[df_cat].all(), "images should be all 'grayscale' in a category"
-    print("'grid', 'screw' and 'zipper' images are grayscale.")
-
-    print("\n> check if images of other categories are not grayscale")
-    df_cat = df[df.subset != "ground_truth"].groupby("category").grayscale.any() == False
-    print(df_cat[df_cat])
-    assert df_cat[df_cat].all(), "images should be all 'color' in a category"
-    print("Images in other categories are all color images.")
+    print("\n> check if images are all grayscale if grayscale")
+    bw_any = df[df.subset != "ground_truth"].grayscale.any()
+    bw_all = df[df.subset != "ground_truth"].grayscale.all()
+    print("any:", bw_any, "all:", bw_all)
+    assert (not bw_any) or bw_all, "images should be all 'grayscale' or none"
+    print("If images are grayscale, all images are grayscale.")
 
     return df
 
@@ -118,11 +96,11 @@ def calc_mask_coverage(df):
     min_pixels = 100
     print("> calculate the minimal image size if the anomalies should still cover about", min_pixels, "pixels")
     df_mask["min_img_size"] = np.sqrt(min_pixels / df_mask.anomaly_coverage).astype(int)
-    df_plot = df_mask.groupby("category").agg({
+    df_plot = df_mask.agg({
         "img_size": "median",
         "anomaly_coverage": "min", 
         "min_img_size": "max"
-        }).rename({"anomaly_coverage": "min_anomaly_coverage"}, axis=1)
+        }).rename({"anomaly_coverage": "min_anomaly_coverage"})
     print(df_plot)
 
     print("> add new columns to database")
@@ -130,33 +108,20 @@ def calc_mask_coverage(df):
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "anomaly_coverage"] = df[(df.subset == "ground_truth")].anomaly_coverage.values
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "min_img_size"] = df[(df.subset == "ground_truth")].min_img_size.values
 
-    ax = sns.barplot(x=df_plot.img_size, y=df_plot.index, label="original size", width=0.9)
-    ax.bar_label(ax.containers[0], label_type="edge", padding=-25)
-    ax = sns.barplot(x=df_plot.min_img_size, y=df_plot.index, label="reduced size", width=0.9)
-    ax.bar_label(ax.containers[1], label_type="edge", padding=-25)
-    plt.title("Minimal image size, so that anomalies cover at least " + str(min_pixels) + " pixels of image")
-    plt.xlabel("size")
-    # plt.legend(bbox_to_anchor=(0, -0.1, 1, -0.1),  loc='upper left', borderaxespad=0, mode="expand", ncols=2)
-    plt.savefig(reports_data_dir + "min_image_size.png")
-    plt.close()
-
     return df
 
 def save_database(df):
-    df.to_csv(mad_stats_file)
+    df.to_csv(data_stats_file)
     df = df.copy()
     print("> save database for modeling")
-    df = df[["category", "subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "min_img_size", "file"]]
-    df.to_csv(mad_file)
+    df = df[["subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "min_img_size", "file"]]
+    df.to_csv(data_clean_file)
     return df
 
-df = pd.read_csv(mad_raw_file)
+df = pd.read_csv(data_raw_file, index_col=0)
 print(df.head())
 
-# df = df[(df.category == "bottle") | (df.category == "zipper")].reset_index(drop=True)
-
 count_images(df)
-count_anomalies(df)
 df = calc_statistics(df)
 df = calc_image_dimensions(df)
 df = calc_image_color(df)

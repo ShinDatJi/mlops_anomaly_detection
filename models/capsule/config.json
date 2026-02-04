@@ -1,6 +1,7 @@
 {
   "category": "capsule",
   "random_state": 42,
+  "train_test_split": 0.5,
   "preprocessing": {
     "good_fraction": 0.25,
     "oversampling": true,

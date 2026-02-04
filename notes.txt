@@ -1,5 +1,25 @@
+uv package manager:
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
 uv run src/...
-
 uv add lib==1.2.0
+windows:
+    run makefile:
+        uv run pymake COMMAND
+
+some todos:
+logs
+nginx
+unit tests => simple
+api training
+dvc => Airflow
+minio => mlflow => local server
+training => dvc/mlflow
+prediction => docker compose
+
+must have:
+versioning
+automation
+model registry
+retraining strategy
+deployment strategy
+monitoring
