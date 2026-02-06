@@ -29,55 +29,50 @@ os.makedirs(os.path.join(reports_dir, "evaluation_test"), exist_ok=True)
 os.makedirs(os.path.join(reports_dir, "evaluation_test_patching"), exist_ok=True)
 
 img_size = report["preprocessing"]["params"]["patch_size"]
-grayscale = report["metrics"]["grayscale"]
-batch_size = config["training"]["batch_size"]
-block_count = len(config["modeling"]["conv_blocks"])
-patches = config["preprocessing"]["patches"]
-patches_x = patches - (2 * config["preprocessing"]["width_cropping"])
-patches_y = patches - (2 * config["preprocessing"]["height_cropping"])
+grayscale = report["grayscale"]
+batch_size = report["training"]["params"]["batch_size"]
+block_count = len(report["modeling"]["params"]["conv_blocks"])
+patches = report["preprocessing"]["params"]["patches"]
+patches_x = patches - (2 * report["preprocessing"]["params"]["width_cropping"])
+patches_y = patches - (2 * report["preprocessing"]["params"]["height_cropping"])
 
 best_model = saving.load_model(model_file)
 # best_model = model
 
-conf = config["validation"]
+params = {
+    "threshold": 0.5
+}
+params.update(config["evaluation"])
 
-report["validation"] = {}
-rep = report["validation"]
-rep["params"] = {}
+report["evaluation"] = {}
+rep = report["evaluation"]
+rep["params"] = params
 rep["metrics"] = {}
+rep = rep["metrics"]
 
 print("evaluate test")
-threshold_mode = conf["test_threshold_mode"]
-rep["params"]["test_threshold_mode"] = threshold_mode
-metrics, threshold = evaluate_simple.test_model(data_test_dir, best_model, img_size, batch_size, block_count, threshold_mode, os.path.join(reports_dir, "evaluation_test"), grayscale)
-rep["metrics"]["test"] = {
-    "threshold": np.round(float(threshold), 2),
-    "metrics": metrics
+metrics, threshold = evaluate_simple.test_model(data_test_dir, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_dir, "evaluation_test"), grayscale)
+rep["test"] = {
+    "threshold": np.round(float(threshold), 2)
 }
+rep["test"].update(metrics)
 
 print("evaluate train")
-threshold_mode = conf["train_threshold_mode"]
-rep["params"]["train_threshold_mode"] = threshold_mode
-metrics, threshold = evaluate_simple.test_model(data_train_dir, best_model, img_size, batch_size, block_count, threshold_mode, os.path.join(reports_dir, "evaluation_train"), grayscale)
-rep["metrics"]["train"] = {
-    "threshold": np.round(float(threshold), 2),
-    "metrics": metrics
+metrics, threshold = evaluate_simple.test_model(data_train_dir, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_dir, "evaluation_train"), grayscale)
+rep["train"] = {
+    "threshold": np.round(float(threshold), 2)
 }
+rep["train"].update(metrics)
 
 print("evaluate test patching")
-threshold_mode = conf["patch_threshold_mode"]
-patch_threshold = conf["patch_threshold"]
-rep["params"]["patch_threshold_mode"] = threshold_mode
-rep["params"]["patch_threshold"] = patch_threshold
-# if threshold_mode != "auto":
-#     threshold = threshold_mode
-metrics, df_pred, df_pred_patch = evaluate_patching.test_model(data_test_patching_dir, best_model, img_size, batch_size, threshold, df_test, patches, patches_x, patches_y, patch_threshold, os.path.join(reports_dir, "evaluation_test_patching"), grayscale)
-rep["metrics"]["test_patching"] = {
-    "threshold": np.round(float(threshold), 2),
-    "metrics": metrics
+threshold = params["threshold"]
+metrics, df_pred, df_pred_patch = evaluate_patching.test_model(data_test_patching_dir, best_model, img_size, batch_size, threshold, df_test, patches_x, patches_y, os.path.join(reports_dir, "evaluation_test_patching"), grayscale)
+rep["test_patching"] = {
+    "threshold": threshold
 }
-df_pred.to_csv(os.path.join(reports_dir, "image_predictions.csv"))
-df_pred_patch.to_csv(os.path.join(reports_dir, "patch_predictions.csv"))
+rep["test_patching"].update(metrics)
+# df_pred.to_csv(os.path.join(reports_dir, "image_predictions.csv"))
+# df_pred_patch.to_csv(os.path.join(reports_dir, "patch_predictions.csv"))
 
 with open(evaluation_report_file, mode="w") as f:
     json.dump(report, f, indent=2)

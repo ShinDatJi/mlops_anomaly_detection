@@ -1,10 +1,10 @@
 {
-  "category": "capsule",
-  "random_state": 42,
-  "train_test_split": 0.5,
+  "preparation": {
+    "train_test_split": 0.5,
+    "random_state": 42
+  },
   "preprocessing": {
     "good_fraction": 0.25,
-    "oversampling": true,
     "patch_size": 78,
     "patches": 8,
     "spread": 0.025,
@@ -20,15 +20,13 @@
     "random_rot_sub": 0,
     "fill_mode": "nearest",
     "fill_mode_sub": "constant",
-    "fill_value": 0
+    "fill_value": 0,
+    "random_state": 42
   },
   "modeling": {
     "learning_rate": 0.001,
     "augmentations": {
       "flip": false,
-      "rotation": 0,
-      "fill_mode": "constant",
-      "fill_value": 0,
       "brightness": 0,
       "contrast": 0,
       "saturation": [
@@ -59,8 +57,6 @@
         "normalization": false
       }
     ],
-    "use_flatten": false,
-    "flatten_dropout": 0.2,
     "dense_blocks": [
       {
         "units": 128,
@@ -68,7 +64,8 @@
         "normalization": false,
         "dropout": 0
       }
-    ]
+    ],
+    "random_state": 42
   },
   "training": {
     "batch_size": 32,
@@ -84,12 +81,10 @@
       "patience": 3,
       "factor": 0.25,
       "cooldown": 2
-    }
+    },
+    "random_state": 42
   },
-  "validation": {
-    "test_threshold_mode": "balanced",
-    "train_threshold_mode": "balanced",
-    "patch_threshold_mode": 0.5,
-    "patch_threshold": "max"
+  "evaluation": {
+    "threshold": 0.5
   }
 }

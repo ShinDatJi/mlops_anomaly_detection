@@ -56,11 +56,12 @@ def calc_statistics(df):
 def calc_image_dimensions(df):
     df = df.copy()
     print("\n> check image dimensions")
-    df_dim = df.agg({"width": "unique", "height": "unique"})
-    df_dim["quadratic"] = df_dim.width == df_dim.height
-    print(df_dim)
-    assert df_dim["quadratic"].all(), "all images should be quadratic"
-    print("Images are all quadratic.")
+    widths = df.width.unique()
+    heights = df.height.unique()
+    print(widths, heights)
+    assert len(widths) == 1 and len(heights) == 1, "all images should be the same size"
+    assert widths[0] == heights[0], "images should be quadratic"
+    print("Images are all quadratic and of same size.")
 
     print("\n> add size column and drop width and height column")
     df["width"] = df["width"].astype("int")
@@ -90,31 +91,18 @@ def calc_image_color(df):
 
 def calc_mask_coverage(df):
     df = df.copy()
+    print("> calculate anomaly coverage and add to database", "pixels")
     df_mask = df[df.subset == "ground_truth"].copy()
     df_mask["anomaly_coverage"] = df_mask.v_mean / 255
-
-    min_pixels = 100
-    print("> calculate the minimal image size if the anomalies should still cover about", min_pixels, "pixels")
-    df_mask["min_img_size"] = np.sqrt(min_pixels / df_mask.anomaly_coverage).astype(int)
-    df_plot = df_mask.agg({
-        "img_size": "median",
-        "anomaly_coverage": "min", 
-        "min_img_size": "max"
-        }).rename({"anomaly_coverage": "min_anomaly_coverage"})
-    print(df_plot)
-
-    print("> add new columns to database")
-    df = pd.concat([df, df_mask[["anomaly_coverage", "min_img_size"]]], axis=1)
+    df = pd.concat([df, df_mask["anomaly_coverage"]], axis=1)
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "anomaly_coverage"] = df[(df.subset == "ground_truth")].anomaly_coverage.values
-    df.loc[(df.subset == "test") & (df.anomaly != "good"), "min_img_size"] = df[(df.subset == "ground_truth")].min_img_size.values
-
     return df
 
 def save_database(df):
     df.to_csv(data_stats_file)
     df = df.copy()
     print("> save database for modeling")
-    df = df[["subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "min_img_size", "file"]]
+    df = df[["subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "file"]]
     df.to_csv(data_clean_file)
     return df
 

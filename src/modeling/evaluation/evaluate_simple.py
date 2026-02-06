@@ -209,7 +209,7 @@ def load_data(data_dir, img_size, batch_size, grayscale):
 
     return ds_test, test_images, test_real
 
-def predict(ds_test, model, test_real, threshold_mode):
+def predict(ds_test, model, test_real, threshold):
     df_predict = pd.DataFrame(test_real, columns=["real"])
 
     test_pred_proba_logit = model.predict(ds_test, verbose=False)[:,0]
@@ -225,25 +225,23 @@ def predict(ds_test, model, test_real, threshold_mode):
     # one_line = np.where(np.array(test_real) == 1)[0][0]
     one_line = df_predict[df_predict.real == 1].index[0]
     
-    if threshold_mode == "balanced":
+    if threshold == "balanced":
         test_pred_proba_sorted = df_predict.pred_proba.sort_values().values
         threshold = (test_pred_proba_sorted[one_line] + test_pred_proba_sorted[one_line - 1]) / 2
         # threshold = (df_predict[df_predict.real == 0].pred_proba.max() + df_predict[df_predict.real == 1].pred_proba.min()) / 2
         # threshold = (test_pred_proba_sorted[one_line])
         # threshold = df_sort[df_sort[1] == 0].iloc[-1, 0]
-    elif threshold_mode == "mean":
-        threshold = df_predict.pred_proba.mean()
     else:
-        threshold = threshold_mode
+        threshold = threshold
     test_pred = (test_pred_proba >= threshold).astype(int)
     df_predict["pred"] = test_pred
 
     return df_predict, one_line, threshold
 
-def test_model(data_dir, model, img_size, batch_size, block_count, threshold_mode="balanced", report_path=None, grayscale=False):
+def test_model(data_dir, model, img_size, batch_size, block_count, threshold="balanced", report_path=None, grayscale=False):
 
     ds_test, test_images, test_real = load_data(data_dir, img_size, batch_size, grayscale)
-    df_predict, one_line, threshold = predict(ds_test, model, test_real, threshold_mode)
+    df_predict, one_line, threshold = predict(ds_test, model, test_real, threshold)
 
     display_metrics(df_predict, threshold, report_path)
     plot_probabilities(df_predict, threshold, report_path)

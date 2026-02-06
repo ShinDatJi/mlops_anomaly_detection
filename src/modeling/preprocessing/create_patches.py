@@ -15,11 +15,11 @@ def prepare_folders(data_dir):
     return path0, path1
 
 def create_patches(
-        data_dir, df, patch_size, patches, good_fraction=False,
-        oversampling=False, keep_all=False, keep_good=False, spread=0.1, threshold="auto", threshold_factor=1, overlap=0,
-        height_cropping=0, width_cropping=0, fast_patching=True,
+        data_dir, df, random_state, patch_size, patches, keep_all=False, keep_good=False, 
+        good_fraction=1, spread=0.1, threshold="full-auto", threshold_factor=1, overlap=0,
+        height_cropping=0, width_cropping=0, fast_patching=True, oversampling=True,
         random_trans=0, random_rot=0, random_trans_sub=0, random_rot_sub=0,
-        fill_mode="reflect", fill_mode_sub="reflect", fill_value=0, seed=None):
+        fill_mode="constant", fill_mode_sub="constant", fill_value=0):
 
     path0, path1 = prepare_folders(data_dir)
     img_size = df.img_size.iloc[0]
@@ -29,12 +29,12 @@ def create_patches(
     new_img_size = (patches - 1) * step + patch_size_overlap
     start = (img_size - new_img_size) // 2
 
-    trans = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=fill_value, seed=seed)
-    rot = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=fill_value, seed=seed)
-    trans_sub = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=seed)
-    rot_sub = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=seed)
+    trans = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=fill_value, seed=random_state)
+    rot = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=fill_value, seed=random_state)
+    trans_sub = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=random_state)
+    rot_sub = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=random_state)
     
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(random_state)
 
     print(data_dir)
     count_0 = 0
@@ -65,15 +65,15 @@ def create_patches(
                 count_0 += 1
     print("  0 patches:", count_0)
 
-    seed *= 2
-    trans = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=fill_value, seed=seed)
-    rot = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=fill_value, seed=seed)
-    trans_mask = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=0, seed=seed)
-    rot_mask = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=0, seed=seed)
-    trans_sub = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=seed)
-    rot_sub = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=seed)
-    trans_sub_mask = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=0, seed=seed)
-    rot_sub_mask = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=0, seed=seed)
+    random_state *= 2
+    trans = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=fill_value, seed=random_state)
+    rot = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=fill_value, seed=random_state)
+    trans_mask = layers.RandomTranslation(random_trans, random_trans, fill_mode=fill_mode, fill_value=0, seed=random_state)
+    rot_mask = layers.RandomRotation(random_rot, fill_mode=fill_mode, fill_value=0, seed=random_state)
+    trans_sub = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=random_state)
+    rot_sub = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=fill_value, seed=random_state)
+    trans_sub_mask = layers.RandomTranslation(random_trans_sub, random_trans_sub, fill_mode=fill_mode_sub, fill_value=0, seed=random_state)
+    rot_sub_mask = layers.RandomRotation(random_rot_sub, fill_mode=fill_mode_sub, fill_value=0, seed=random_state)
 
     if threshold == "auto":
         threshold = df[df.anomaly != "good"].anomaly_coverage.min() / spread

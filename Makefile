@@ -12,20 +12,19 @@ run-data:
 	run-data-analyze
 	run-data-visualize
 
-run-modeling-preprocessing:
-	uv run --env-file src/modeling/default.env src/modeling/preprocessing/train_test_split.py
+run-modeling-preprocess:
 	uv run --env-file src/modeling/default.env src/modeling/preprocessing/preprocess_data.py
 
-run-modeling-training:
+run-modeling-train:
 	uv run --env-file src/modeling/default.env src/modeling/training/train_model.py
 
-run-modeling-evaluation:
+run-modeling-evaluate:
 	uv run --env-file src/modeling/default.env src/modeling/evaluation/evaluate_model.py
 
 run-modeling:
-	run-modeling-preprocessing
-	run-modeling-training
-	run-modeling-evaluation
+	run-modeling-preprocess
+	run-modeling-train
+	run-modeling-evaluate
 
 run-all:
 	run-data

@@ -42,7 +42,7 @@ def plot_false_predictions(df_predict, df_predict_patch, patches_x, patches_y, t
         plt.savefig(os.path.join(report_path, "false_predictions.png"))
     plt.close()
 
-def plot_mean_probabilites(df_predict_patch, one_line, patches, patches_x, patches_y, threshold, report_path=None):
+def plot_mean_probabilites(df_predict_patch, one_line, patches_x, patches_y, threshold, report_path=None):
 
     # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), width_ratios=[2, 1])
     fig = plt.figure(figsize=(10, 6))
@@ -115,7 +115,7 @@ def plot_probabilities(df_predict_patch, one_line_patch, threshold, report_path=
         plt.savefig(os.path.join(report_path, "prediction_probabilities.png"))
     plt.close()
 
-def plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, patches_x, patches_y, threshold, report_path=None):
+def plot_patching(df_test, df_predict, df_predict_patch, test_images, patches_x, patches_y, threshold, report_path=None):
 
     def plot_patches(row, col, img, i, title):
         plt.subplot(6, 4, (row - 1) * 12 + col)
@@ -180,7 +180,7 @@ def plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, p
         plt.savefig(os.path.join(report_path, "patching.png"))
     plt.close()
 
-def predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_size, patches, patches_x, patches_y, patch_images):
+def predict_patched(df_test, df_predict_patch, threshold, img_size, patches_x, patches_y, patch_images):
     test_images = []
     test_pred = []
     test_real = df_test.anomaly.apply(lambda v: 0 if v == "good" else 1).values
@@ -197,29 +197,24 @@ def predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_s
             for c in range(patches_x):
                 image[r*img_size:r*img_size+img_size, c*img_size:c*img_size+img_size] = img[r, c, :, :, :]
         test_images.append(image)
-        if patch_threshold == "mean":
-            test_pred.append((df_predict_patch.pred_proba.values[i*step:i*step+step].mean() >= threshold).astype(int))
-        elif patch_threshold == "max":
-            test_pred.append((df_predict_patch.pred_proba.values[i*step:i*step+step].max() >= threshold).astype(int))
-        else:
-            test_pred.append((df_predict_patch.pred.values[i*step:i*step+step].sum() >= patch_threshold).astype(int))
+        test_pred.append((df_predict_patch.pred_proba.values[i*step:i*step+step].max() >= threshold).astype(int))
 
     df_predict = pd.DataFrame(test_real, columns=["real"])
     df_predict["pred"] = test_pred
 
     return df_predict, one_line, test_images
 
-def test_model(data_dir, model, img_size, batch_size, threshold, df_test, patches, patches_x, patches_y, patch_threshold, report_path=None, grayscale=False):
+def test_model(data_dir, model, img_size, batch_size, threshold, df_test, patches_x, patches_y, report_path=None, grayscale=False):
     ds_test, patch_images, test_real = evaluate_simple.load_data(data_dir, img_size, batch_size, grayscale)
     df_predict_patch, one_line_patch, threshold = evaluate_simple.predict(ds_test, model, test_real, threshold)
-    df_predict, one_line, test_images = predict_patched(df_test, df_predict_patch, patch_threshold, threshold, img_size, patches, patches_x, patches_y, patch_images)
+    df_predict, one_line, test_images = predict_patched(df_test, df_predict_patch, threshold, img_size, patches_x, patches_y, patch_images)
 
     evaluate_simple.display_metrics(df_predict, threshold, report_path)
     metrics = evaluate_simple.get_metrics(df_predict, pred_proba_scores=False)
 
     plot_false_predictions(df_predict, df_predict_patch, patches_x, patches_y, threshold, report_path)
-    plot_mean_probabilites(df_predict_patch, one_line, patches, patches_x, patches_y, threshold, report_path)
+    plot_mean_probabilites(df_predict_patch, one_line, patches_x, patches_y, threshold, report_path)
     plot_probabilities(df_predict_patch, one_line_patch, threshold, report_path)
-    plot_patching(df_test, df_predict, df_predict_patch, test_images, patches, patches_x, patches_y, threshold, report_path)
+    plot_patching(df_test, df_predict, df_predict_patch, test_images, patches_x, patches_y, threshold, report_path)
 
     return metrics, df_predict, df_predict_patch

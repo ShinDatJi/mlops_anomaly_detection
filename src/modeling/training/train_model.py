@@ -26,29 +26,87 @@ with open(preprocessing_report_file, "r") as f:
 
 os.makedirs(reports_dir, exist_ok=True)
 
-random_state = config["random_state"]
-utils.set_random_seed(random_state)
-
-params = config["modeling"]
+params = {
+    "learning_rate": 0.001,
+    "augmentations": { },
+    "center_scaled": False,
+    "conv_blocks": [
+        {
+            "filters": 32,
+            "dropout": 0,
+            "normalization": False
+        },
+        {
+            "filters": 64,
+            "dropout": 0.1,
+            "normalization": False
+        },
+        {
+            "filters": 128,
+            "dropout": 0.2,
+            "normalization": False
+        }
+    ],
+    "dense_blocks": [
+        {
+            "units": 128,
+            "l2": 0.01,
+            "dropout": 0,
+            "normalization": False
+        }
+    ],
+    "random_state": 42
+}
+params.update(config["modeling"])
+params["augmentations"] = {
+    "flip": False,
+    "brightness": 0,
+    "contrast": 0,
+    "saturation": [0.5, 0.5],
+    "hue": 0
+}
+params["augmentations"].update(config["modeling"]["augmentations"])
 
 report["modeling"] = {}
 rep = report["modeling"]
 rep["params"] = params
 
 img_size = report["preprocessing"]["params"]["patch_size"]
-grayscale = report["metrics"]["grayscale"]
+grayscale = report["grayscale"]
 
-model = create_model.create_model(**params, img_size=img_size, seed=random_state, grayscale=grayscale)
+utils.set_random_seed(params["random_state"])
+
+model = create_model.create_model(**params, img_size=img_size, grayscale=grayscale)
 model.summary()
 
 # print(json.dumps(report, indent=2))
 
-params = config["training"]
+params = {
+    "batch_size": 32,
+    "epochs": 50,
+    "validation_from_train": False,
+    "use_buggy_early_stopping_restore_best_weights": False,
+    "early_stopping": { },
+    "reduce_learning_rate_on_plateau": { },
+    "random_state": 42
+}
+params.update(config["training"])
+params["early_stopping"] = {
+    "min_delta": 0.01,
+    "patience": 5
+}
+params["early_stopping"].update(config["training"]["early_stopping"])
+params["reduce_learning_rate_on_plateau"] = {
+    "min_delta": 0.01,
+    "patience": 3,
+    "factor": 0.25,
+    "cooldown": 2
+}
+params["reduce_learning_rate_on_plateau"].update(config["training"]["reduce_learning_rate_on_plateau"])
+
 batch_size = params["batch_size"]
-if "validation_from_train" in params:
-    validation_from_train = params["validation_from_train"]
-else:
-    validation_from_train = False
+validation_from_train = params["validation_from_train"]
+random_state = params["random_state"]
 
 if validation_from_train:
     ds_train, ds_val = image_dataset_from_directory(
@@ -87,10 +145,7 @@ epoch_sum = 0
 monitor = "val_loss" if validation_from_train else "loss"
 
 early_stopping_params = params["early_stopping"]
-if "use_buggy_early_stopping_restore_best_weights" in params:
-    restore_best = params["use_buggy_early_stopping_restore_best_weights"]
-else:
-    restore_best = False
+restore_best = params["use_buggy_early_stopping_restore_best_weights"]
 early_stopping = callbacks.EarlyStopping(monitor=monitor, restore_best_weights=restore_best, verbose=1, **early_stopping_params)
 
 reduce_lr_params = params["reduce_learning_rate_on_plateau"]

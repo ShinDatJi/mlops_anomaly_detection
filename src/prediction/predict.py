@@ -1,24 +1,18 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # 0=all, 1=info, 2=warn, 3=error
 import cv2
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import json
-import pandas as pd
 import keras.saving as saving
-import os
 
 models_dir = "./models/"
 
-configs = {}
 reports = {}
 models = {}
 
 def load_files(category):
     path = os.path.join(models_dir, category)
-    if not category in configs:
-        with open(os.path.join(path, "config.json"), "r") as f:
-            configs[category] = json.load(f)
     if not category in reports:
         with open(os.path.join(path, "report.json"), "r") as f:
             reports[category] = json.load(f)
@@ -32,14 +26,7 @@ def load_image(image_bin, grayscale):
         image = image[:,:,:1]
     return image
 
-def create_patches(img, config):
-    config = config["preprocessing"]
-    patches = config["patches"]
-    overlap = config["overlap"]
-    height_cropping = config["height_cropping"]
-    width_cropping = config["width_cropping"]
-    patch_size = config["patch_size"]
-
+def create_patches(img, patch_size, patches, overlap, height_cropping, width_cropping):
     img_size = img.shape[0]
 
     step = int(img_size / (patches + overlap / (1 - overlap)))
@@ -60,12 +47,7 @@ def create_patches(img, config):
 
     return tf.convert_to_tensor(patch_images)
 
-def predict_patched(model, images, config):
-    threshold = config["validation"]["patch_threshold_mode"]
-    patches = config["preprocessing"]["patches"]
-    height_cropping = config["preprocessing"]["height_cropping"]
-    width_cropping = config["preprocessing"]["width_cropping"]
-
+def predict_patched(model, images, threshold, patches, height_cropping, width_cropping):
     logits = model.predict(images, verbose=False)[:,0]
     pred_probas = tf.sigmoid(logits).numpy()
 
@@ -79,8 +61,16 @@ def predict_patched(model, images, config):
 def predict(category, image_bin):
     load_files(category)
     image = load_image(image_bin, reports[category]["grayscale"])
-    config = configs[category]
-    images = create_patches(image, config)
-    pred, pred_probas = predict_patched(models[category], images, config)
+    report = reports[category]
+    rep = report["preprocessing"]["params"]
+    patch_size = rep["patch_size"]
+    patches = rep["patches"]
+    overlap = rep["overlap"]
+    height_cropping = rep["height_cropping"]
+    width_cropping = rep["width_cropping"]
+    threshold = report["evaluation"]["params"]["threshold"]   
+
+    images = create_patches(image, patch_size, patches, overlap, height_cropping, width_cropping)
+    pred, pred_probas = predict_patched(models[category], images, threshold, patches, height_cropping, width_cropping)
 
     return pred

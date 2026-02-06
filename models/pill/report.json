@@ -1,49 +1,58 @@
 {
   "category": "pill",
-  "random_state": 42,
   "img_size": 800,
   "grayscale": false,
-  "patching": true,
+  "preparation": {
+    "params": {
+      "train_test_split": 0.5,
+      "random_state": 42
+    }
+  },
   "preprocessing": {
     "params": {
-      "good_fraction": 0.1,
-      "oversampling": true,
       "patch_size": 78,
       "patches": 8,
-      "spread": 0.025,
-      "threshold": "full-auto",
       "overlap": 0.5,
+      "good_fraction": 0.1,
+      "oversampling": true,
+      "threshold": "full-auto",
+      "threshold_factor": 1,
+      "spread": 0.025,
       "height_cropping": 1,
-      "embedding": 0,
+      "width_cropping": 0,
       "random_trans": 0,
       "random_rot": 0,
       "random_trans_sub": 0,
       "random_rot_sub": 0,
       "fill_mode": "constant",
       "fill_mode_sub": "constant",
-      "fill_value": 0
+      "fill_value": 0,
+      "fast_patching": true,
+      "random_state": 42
     },
-    "threshold": 0.01,
-    "train_images": {
-      "images_good_source": 267,
-      "images_bad_source": 69,
-      "oversampling": 5,
-      "images_good": 3633,
-      "images_bad": 4030
-    },
-    "test_images": {
-      "images_good_source": 26,
-      "images_bad_source": 72,
-      "oversampling": 0,
-      "images_good": 1248,
-      "images_bad": 819
-    },
-    "test_patching_images": {
-      "images_good_source": 26,
-      "images_bad_source": 72,
-      "oversampling": 0,
-      "images_good": 1248,
-      "images_bad": 3456
+    "metrics": {
+      "threshold": 0.01,
+      "train_images": {
+        "images_good_source": 267,
+        "images_bad_source": 69,
+        "oversampling": 5,
+        "images_good": 3633,
+        "images_bad": 4030
+      },
+      "test_images": {
+        "images_good_source": 26,
+        "images_bad_source": 72,
+        "oversampling": 0,
+        "images_good": 1248,
+        "images_bad": 819
+      },
+      "test_patching_images": {
+        "images_good_source": 26,
+        "images_bad_source": 72,
+        "oversampling": 0,
+        "images_good": 1248,
+        "images_bad": 3456
+      }
     }
   },
   "modeling": {
@@ -51,9 +60,6 @@
       "learning_rate": 0.001,
       "augmentations": {
         "flip": false,
-        "rotation": 0,
-        "fill_mode": "constant",
-        "fill_value": 0,
         "brightness": 0,
         "contrast": 0,
         "saturation": [
@@ -84,8 +90,6 @@
           "normalization": false
         }
       ],
-      "use_flatten": false,
-      "flatten_dropout": 0.2,
       "dense_blocks": [
         {
           "units": 128,
@@ -93,15 +97,15 @@
           "normalization": false,
           "dropout": 0
         }
-      ]
+      ],
+      "random_state": 42
     }
   },
   "training": {
     "params": {
       "batch_size": 32,
-      "validation_from_train": false,
       "epochs": 50,
-      "class_weight": 0.5,
+      "validation_from_train": false,
       "use_buggy_early_stopping_restore_best_weights": false,
       "early_stopping": {
         "min_delta": 0.01,
@@ -112,22 +116,27 @@
         "patience": 3,
         "factor": 0.25,
         "cooldown": 2
-      }
+      },
+      "random_state": 42
     },
-    "epochs": 35,
-    "best_epoch": 34,
-    "scores": {
-      "accuracy": 0.99,
-      "loss": 0.041,
-      "val_accuracy": 0.897,
-      "val_loss": 0.4862
+    "metrics": {
+      "epochs": 35,
+      "best_epoch": 34,
+      "scores": {
+        "accuracy": 0.99,
+        "loss": 0.041,
+        "val_accuracy": 0.897,
+        "val_loss": 0.4862
+      }
     }
   },
-  "testing": {
-    "test": {
-      "threshold_mode": "balanced",
-      "threshold": 0.05,
-      "metrics": {
+  "evaluation": {
+    "params": {
+      "threshold": 0.5
+    },
+    "metrics": {
+      "test": {
+        "threshold": 0.05,
         "tp": 696,
         "tn": 1125,
         "fp": 123,
@@ -138,12 +147,9 @@
         "f1_score": 0.85,
         "AUC": 0.914,
         "AP": 0.923
-      }
-    },
-    "train": {
-      "threshold_mode": "balanced",
-      "threshold": 0.16,
-      "metrics": {
+      },
+      "train": {
+        "threshold": 0.16,
         "tp": 4010,
         "tn": 3613,
         "fp": 20,
@@ -154,13 +160,9 @@
         "f1_score": 0.995,
         "AUC": 1.0,
         "AP": 1.0
-      }
-    },
-    "test_patching": {
-      "threshold_mode": 0.5,
-      "threshold": 0.5,
-      "patch_threshold": "max",
-      "metrics": {
+      },
+      "test_patching": {
+        "threshold": 0.5,
         "tp": 70,
         "tn": 19,
         "fp": 7,
