@@ -15,5 +15,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pip>=26.0.1",
     "py-make>=0.1.2",
 ]

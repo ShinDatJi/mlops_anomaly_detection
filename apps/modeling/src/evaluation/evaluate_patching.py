@@ -204,8 +204,8 @@ def predict_patched(df_test, df_predict_patch, threshold, img_size, patches_x, p
 
     return df_predict, one_line, test_images
 
-def test_model(data_dir, model, img_size, batch_size, threshold, df_test, patches_x, patches_y, report_path=None, grayscale=False):
-    ds_test, patch_images, test_real = evaluate_simple.load_data(data_dir, img_size, batch_size, grayscale)
+def test_model(data_path, model, img_size, batch_size, threshold, df_test, patches_x, patches_y, report_path=None, grayscale=False):
+    ds_test, patch_images, test_real = evaluate_simple.load_data(data_path, img_size, batch_size, grayscale)
     df_predict_patch, one_line_patch, threshold = evaluate_simple.predict(ds_test, model, test_real, threshold)
     df_predict, one_line, test_images = predict_patched(df_test, df_predict_patch, threshold, img_size, patches_x, patches_y, patch_images)
 

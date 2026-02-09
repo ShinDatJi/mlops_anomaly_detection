@@ -7,14 +7,15 @@ import evaluate_simple
 import evaluate_patching
 
 config_file = os.environ["CONFIG_FILE"]
-data_train_dir = os.environ["DATA_TRAIN_DIR"]
-data_test_dir = os.environ["DATA_TEST_DIR"]
-data_test_patching_dir = os.environ["DATA_TEST_PATCHING_DIR"]
-data_test_file = os.environ["DATA_TEST_FILE"]
-training_report_file = os.environ["TRAINING_REPORT_FILE"]
-model_file = os.environ["MODEL_FILE"]
-reports_dir = os.environ["REPORTS_DIR"]
-evaluation_report_file = os.environ["EVALUATION_REPORT_FILE"]
+data_path = os.environ["DATA_PATH"]
+test_db_file = os.path.join(data_path, os.environ["DATA_TEST_DB"])
+train_path = os.path.join(data_path, os.environ["DATA_TRAIN_DIR"])
+test_path = os.path.join(data_path, os.environ["DATA_TEST_DIR"])
+test_patching_path = os.path.join(data_path, os.environ["DATA_TEST_PATCHING_DIR"])
+reports_path = os.environ["REPORTS_PATH"]
+training_report_file = os.path.join(reports_path, os.environ["REPORTS_TRAINING_REPORT"])
+evaluation_report_file = os.path.join(reports_path, os.environ["REPORTS_EVALUATION_REPORT"])
+model_file = os.path.join(reports_path, os.environ["REPORTS_MODEL"])
 
 with open(config_file, "r") as f:
     config = json.load(f)
@@ -22,11 +23,11 @@ with open(config_file, "r") as f:
 with open(training_report_file, "r") as f:
     report = json.load(f)
 
-df_test = pd.read_csv(data_test_file, index_col=0)
+df_test = pd.read_csv(test_db_file, index_col=0)
 
-os.makedirs(os.path.join(reports_dir, "evaluation_train"), exist_ok=True)
-os.makedirs(os.path.join(reports_dir, "evaluation_test"), exist_ok=True)
-os.makedirs(os.path.join(reports_dir, "evaluation_test_patching"), exist_ok=True)
+os.makedirs(os.path.join(reports_path, "evaluation_train"), exist_ok=True)
+os.makedirs(os.path.join(reports_path, "evaluation_test"), exist_ok=True)
+os.makedirs(os.path.join(reports_path, "evaluation_test_patching"), exist_ok=True)
 
 img_size = report["preprocessing"]["params"]["patch_size"]
 grayscale = report["grayscale"]
@@ -51,14 +52,14 @@ rep["metrics"] = {}
 rep = rep["metrics"]
 
 print("evaluate test")
-metrics, threshold = evaluate_simple.test_model(data_test_dir, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_dir, "evaluation_test"), grayscale)
+metrics, threshold = evaluate_simple.test_model(test_path, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_path, "evaluation_test"), grayscale)
 rep["test"] = {
     "threshold": np.round(float(threshold), 2)
 }
 rep["test"].update(metrics)
 
 print("evaluate train")
-metrics, threshold = evaluate_simple.test_model(data_train_dir, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_dir, "evaluation_train"), grayscale)
+metrics, threshold = evaluate_simple.test_model(train_path, best_model, img_size, batch_size, block_count, "balanced", os.path.join(reports_path, "evaluation_train"), grayscale)
 rep["train"] = {
     "threshold": np.round(float(threshold), 2)
 }
@@ -66,7 +67,7 @@ rep["train"].update(metrics)
 
 print("evaluate test patching")
 threshold = params["threshold"]
-metrics, df_pred, df_pred_patch = evaluate_patching.test_model(data_test_patching_dir, best_model, img_size, batch_size, threshold, df_test, patches_x, patches_y, os.path.join(reports_dir, "evaluation_test_patching"), grayscale)
+metrics, df_pred, df_pred_patch = evaluate_patching.test_model(test_patching_path, best_model, img_size, batch_size, threshold, df_test, patches_x, patches_y, os.path.join(reports_path, "evaluation_test_patching"), grayscale)
 rep["test_patching"] = {
     "threshold": threshold
 }

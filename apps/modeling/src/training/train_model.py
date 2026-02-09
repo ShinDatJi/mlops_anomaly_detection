@@ -11,12 +11,14 @@ import create_model
 import visualize_train
 
 config_file = os.environ["CONFIG_FILE"]
-data_train_dir = os.environ["DATA_TRAIN_DIR"]
-data_test_dir = os.environ["DATA_TEST_DIR"]
-preprocessing_report_file = os.environ["PREPROCESSING_REPORT_FILE"]
-reports_dir = os.environ["REPORTS_DIR"]
-model_file = os.environ["MODEL_FILE"]
-training_report_file = os.environ["TRAINING_REPORT_FILE"]
+data_path = os.environ["DATA_PATH"]
+train_path = os.path.join(data_path, os.environ["DATA_TRAIN_DIR"])
+test_path = os.path.join(data_path, os.environ["DATA_TEST_DIR"])
+reports_path = os.environ["REPORTS_PATH"]
+preprocessing_report_file = os.path.join(reports_path, os.environ["REPORTS_PREPROCESSING_REPORT"])
+training_report_file = os.path.join(reports_path, os.environ["REPORTS_TRAINING_REPORT"])
+model_file = os.path.join(reports_path, os.environ["REPORTS_MODEL"])
+max_epochs = os.getenv("MAX_EPOCHS")
 
 with open(config_file, "r") as f:
     config = json.load(f)
@@ -24,7 +26,7 @@ with open(config_file, "r") as f:
 with open(preprocessing_report_file, "r") as f:
     report = json.load(f)
 
-os.makedirs(reports_dir, exist_ok=True)
+os.makedirs(reports_path, exist_ok=True)
 
 params = {
     "learning_rate": 0.001,
@@ -110,7 +112,7 @@ random_state = params["random_state"]
 
 if validation_from_train:
     ds_train, ds_val = image_dataset_from_directory(
-        directory = data_train_dir,
+        directory = train_path,
         image_size=(img_size, img_size),
         validation_split = 0.2,
         subset = "both",
@@ -122,7 +124,7 @@ if validation_from_train:
     )
 else:
     ds_train = image_dataset_from_directory(
-        directory = data_train_dir,
+        directory = train_path,
         image_size=(img_size, img_size),
         seed = random_state,
         batch_size = batch_size,
@@ -131,7 +133,7 @@ else:
         color_mode = "grayscale" if grayscale else "rgb"
     )
     ds_val = image_dataset_from_directory(
-        directory = data_test_dir,
+        directory = test_path,
         image_size=(img_size, img_size),
         seed = random_state,
         batch_size = batch_size,
@@ -151,13 +153,15 @@ early_stopping = callbacks.EarlyStopping(monitor=monitor, restore_best_weights=r
 reduce_lr_params = params["reduce_learning_rate_on_plateau"]
 reduce_lr = callbacks.ReduceLROnPlateau(monitor=monitor, verbose=1, **reduce_lr_params)
 
-model_file_name = os.path.join(reports_dir, "model_{epoch}.keras") if restore_best else model_file
+model_file_name = os.path.join(reports_path, "model_{epoch}.keras") if restore_best else model_file
 print(model_file_name)
 model_checkpoint = callbacks.ModelCheckpoint(model_file_name, monitor=monitor, verbose=0, save_best_only=True, save_freq="epoch")
 
 epochs = params["epochs"]
+if max_epochs:
+    epochs = int(max_epochs)
 # epochs = 2
-print("overall epochs", epoch_sum)
+print("epochs:", epochs, "overall epochs:", epoch_sum)
 
 model_history = model.fit(ds_train, validation_data=ds_val, epochs=epochs, callbacks=[early_stopping, reduce_lr, model_checkpoint])
 
@@ -169,12 +173,12 @@ if restore_best:
 else:
     best_epoch = int(np.argmin(model_history.history["loss"])) + 1
 print("best epoch", best_epoch)
-visualize_train.plot_history(model_history.history, best_epoch, len(model_history.epoch), os.path.join(reports_dir, "training_history.png"), validation_from_train)
+visualize_train.plot_history(model_history.history, best_epoch, len(model_history.epoch), os.path.join(reports_path, "training_history.png"), validation_from_train)
 
 if restore_best:
     early_stopping_best_model = saving.load_model(model_file_name.format(epoch=best_epoch))
     saving.save_model(early_stopping_best_model, model_file, overwrite=True)
-    files = glob.glob(os.path.join(reports_dir, "model_*.keras"))
+    files = glob.glob(os.path.join(reports_path, "model_*.keras"))
     for f in files:
         os.remove(f)
 
@@ -183,7 +187,7 @@ df_history["epoch"] = model_history.epoch
 df_history.epoch += 1
 df_history["validation_set"] = "train_split" if validation_from_train else "test"
 df_history["monitor"] = "val_loss" if validation_from_train else "loss"
-df_history.to_csv(os.path.join(reports_dir, "training_history.csv"))
+df_history.to_csv(os.path.join(reports_path, "training_history.csv"))
 
 report["training"] = {}
 rep = report["training"]

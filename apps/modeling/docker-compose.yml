@@ -1,0 +1,83 @@
+services:
+  modeling-preprocessing:
+    container_name: modeling-preprocessing-$CATEGORY
+    working_dir: /app
+    build:
+      context: ./apps/modeling/
+      target: modeling_preprocessing
+      # dockerfile: ./src/data/Dockerfile
+    volumes:
+      - $CONFIG_FILE:/app/config.json:ro
+      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
+      - $DATA_PATH:/app/data/processed
+      - $REPORTS_PATH:/app/reports
+    environment:
+      - CATEGORY=$CATEGORY
+      - CONFIG_FILE=config.json
+      - DATA_PATH=data/processed
+      - DATA_CLEAN_DB=$DATA_CLEAN_DB
+      - DATA_TRAIN_DB=$DATA_TRAIN_DB
+      - DATA_TEST_DB=$DATA_TEST_DB
+      - DATA_TRAIN_DIR=$DATA_TRAIN_DIR
+      - DATA_TEST_DIR=$DATA_TEST_DIR
+      - DATA_TEST_PATCHING_DIR=$DATA_TEST_PATCHING_DIR
+      - REPORTS_PATH=reports
+      - REPORTS_PREPROCESSING_REPORT=$REPORTS_PREPROCESSING_REPORT
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=1
+
+  modeling-training:
+    container_name: modeling-training-$CATEGORY
+    working_dir: /app
+    build:
+      context: ./apps/modeling/
+      target: modeling_training
+      # dockerfile: ./src/data/Dockerfile
+    volumes:
+      - $CONFIG_FILE:/app/config.json:ro
+      - $DATA_PATH:/app/data/processed:ro
+      - $REPORTS_PATH:/app/reports
+    environment:
+      - CONFIG_FILE=config.json
+      - DATA_PATH=data/processed
+      - DATA_TRAIN_DIR=$DATA_TRAIN_DIR
+      - DATA_TEST_DIR=$DATA_TEST_DIR
+      - REPORTS_PATH=reports
+      - REPORTS_PREPROCESSING_REPORT=$REPORTS_PREPROCESSING_REPORT
+      - REPORTS_TRAINING_REPORT=$REPORTS_TRAINING_REPORT
+      - REPORTS_MODEL=$REPORTS_MODEL
+      - MAX_EPOCHS=$MAX_EPOCHS
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=1
+    depends_on:
+      modeling-preprocessing:
+        condition: service_completed_successfully
+
+  modeling-evaluation:
+    container_name: modeling-evaluation-$CATEGORY
+    working_dir: /app
+    build:
+      context: ./apps/modeling/
+      target: modeling_evaluation
+      # dockerfile: ./src/data/Dockerfile
+    volumes:
+      - $CONFIG_FILE:/app/config.json:ro
+      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
+      - $DATA_PATH:/app/data/processed:ro
+      - $REPORTS_PATH:/app/reports
+    environment:
+      - CONFIG_FILE=config.json
+      - DATA_PATH=data/processed
+      - DATA_TEST_DB=$DATA_TEST_DB
+      - DATA_TRAIN_DIR=$DATA_TRAIN_DIR
+      - DATA_TEST_DIR=$DATA_TEST_DIR
+      - DATA_TEST_PATCHING_DIR=$DATA_TEST_PATCHING_DIR
+      - REPORTS_PATH=reports
+      - REPORTS_TRAINING_REPORT=$REPORTS_TRAINING_REPORT
+      - REPORTS_EVALUATION_REPORT=$REPORTS_EVALUATION_REPORT
+      - REPORTS_MODEL=$REPORTS_MODEL
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=1
+    depends_on:
+      modeling-training:
+        condition: service_completed_successfully

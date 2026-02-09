@@ -180,10 +180,10 @@ def plot_grad_cam(model, df_predict, threshold, images, block_count, report_path
         plt.savefig(os.path.join(report_path, "grad_cam.png"))
     plt.close()
 
-def load_data(data_dir, img_size, batch_size, grayscale):
+def load_data(data_path, img_size, batch_size, grayscale):
 
     ds_test = image_dataset_from_directory(
-        directory = data_dir,
+        directory = data_path,
         image_size=(img_size, img_size),
         batch_size = batch_size,
         shuffle = False,
@@ -238,9 +238,9 @@ def predict(ds_test, model, test_real, threshold):
 
     return df_predict, one_line, threshold
 
-def test_model(data_dir, model, img_size, batch_size, block_count, threshold="balanced", report_path=None, grayscale=False):
+def test_model(data_path, model, img_size, batch_size, block_count, threshold="balanced", report_path=None, grayscale=False):
 
-    ds_test, test_images, test_real = load_data(data_dir, img_size, batch_size, grayscale)
+    ds_test, test_images, test_real = load_data(data_path, img_size, batch_size, grayscale)
     df_predict, one_line, threshold = predict(ds_test, model, test_real, threshold)
 
     display_metrics(df_predict, threshold, report_path)

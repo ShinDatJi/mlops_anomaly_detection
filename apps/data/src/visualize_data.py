@@ -1,17 +1,11 @@
 import pandas as pd
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import cv2
 import os
 
-data_stats_file = os.environ["DATA_STATS_FILE"]
-reports_dir = os.environ["REPORTS_DIR"]
-
-os.makedirs(reports_dir, exist_ok=True)
-
-def plot_anomaly_coverage(df):
+def plot_anomaly_coverage(df, reports_path):
     print("plot anomaly coverage")
     df1 = df[df.subset == "ground_truth"].copy()
     df1["anomaly_coverage"] = df1.v_mean / 255
@@ -22,10 +16,10 @@ def plot_anomaly_coverage(df):
     plt.xlabel("anomaly coverage")
     plt.grid()
     plt.tight_layout()
-    plt.savefig(os.path.join(reports_dir, "anomaly_coverage.png"))
+    plt.savefig(os.path.join(reports_path, "anomaly_coverage.png"))
     plt.close()
 
-def plot_hsv_distribution(df):
+def plot_hsv_distribution(df, reports_path):
     print("plot hsv distribution")
     channels = {"h": "Hue", "s": "Saturation", "v": "Value"}
 
@@ -47,10 +41,10 @@ def plot_hsv_distribution(df):
     hsv_stripplot(df2, "v")
     plt.suptitle("HSV distribution strip plot ", fontsize=16)
     plt.tight_layout()
-    plt.savefig(os.path.join(reports_dir, "hsv_distribution.png"))
+    plt.savefig(os.path.join(reports_path, "hsv_distribution.png"))
     plt.close()
 
-def plot_stat_images(df):
+def plot_stat_images(df, reports_path):
     def show_title(title = None, suptitle = None):
         if suptitle:
             plt.xticks([])
@@ -142,12 +136,13 @@ def plot_stat_images(df):
             show_image(img_std)
 
     plt.suptitle("Variance images\n", fontsize=16)
-    plt.savefig(os.path.join(reports_dir, "variance_images.png"))
+    plt.savefig(os.path.join(reports_path, "variance_images.png"))
     plt.close()
 
-df = pd.read_csv(data_stats_file, index_col = 0)
-print(df.head())
+def visualize_data(df, reports_path):
+    print(reports_path)
+    print(df.head())
 
-plot_anomaly_coverage(df)
-plot_hsv_distribution(df)
-plot_stat_images(df)
+    plot_anomaly_coverage(df, reports_path)
+    plot_hsv_distribution(df, reports_path)
+    plot_stat_images(df, reports_path)

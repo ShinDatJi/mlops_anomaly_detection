@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 import keras.layers as layers
 
-def prepare_folders(data_dir):
-    path0 = os.path.join(data_dir, "0")
-    path1 = os.path.join(data_dir, "1")
+def prepare_folders(data_path):
+    path0 = os.path.join(data_path, "0")
+    path1 = os.path.join(data_path, "1")
     os.makedirs(path0, exist_ok=True)
     os.makedirs(path1, exist_ok=True)
     for e in os.scandir(path0):
@@ -15,13 +15,13 @@ def prepare_folders(data_dir):
     return path0, path1
 
 def create_patches(
-        data_dir, df, random_state, patch_size, patches, keep_all=False, keep_good=False, 
+        data_path, df, random_state, patch_size, patches, keep_all=False, keep_good=False, 
         good_fraction=1, spread=0.1, threshold="full-auto", threshold_factor=1, overlap=0,
         height_cropping=0, width_cropping=0, fast_patching=True, oversampling=True,
         random_trans=0, random_rot=0, random_trans_sub=0, random_rot_sub=0,
         fill_mode="constant", fill_mode_sub="constant", fill_value=0):
 
-    path0, path1 = prepare_folders(data_dir)
+    path0, path1 = prepare_folders(data_path)
     img_size = df.img_size.iloc[0]
 
     step = int(img_size / (patches + overlap / (1 - overlap)))
@@ -36,7 +36,7 @@ def create_patches(
     
     rng = np.random.default_rng(random_state)
 
-    print(data_dir)
+    print(data_path)
     count_0 = 0
     for i in df[df.anomaly == "good"].index:
         img = cv2.imread(df.loc[i].file)
@@ -139,7 +139,8 @@ def create_patches(
                         count_0 += 1
         if keep_good and count == 0:
             print("  0 patches:", count_0)
-        print("  1 patches:", count_1, end="\r")
+        # print("  1 patches:", count_1, end="\r")
+        print("  1 patches:", count_1)
         if not oversampling:
             break
         count += 1

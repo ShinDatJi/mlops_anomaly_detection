@@ -1,22 +1,15 @@
 import os
 import pandas as pd
 
-data_raw_dir = os.environ["DATA_RAW_DIR"]
-data_processed_dir = os.environ["DATA_PROCESSED_DIR"]
-data_raw_file = os.environ["DATA_RAW_FILE"]
-
-os.makedirs(data_processed_dir, exist_ok=True)
-
 # read MAD file structure into a dataframe
 def create_file_db(path):
+    print("\n> load data")
+    print(path)
     db = []
     for root, dirs, files in os.walk(path):
-        print(path)
-        print(root)
         paths = root.replace(path, '').replace('\\', '/').split('/')
         if paths[0] == '':
             paths = paths[1:] # remove root path
-        print(paths)
         for f in files:
             entry = []
             entry.append(paths) # array of paths (folder structure)
@@ -144,32 +137,34 @@ def check_consistency(df):
     assert (df_test == df_ground_truth).all().all(), "anomaly folders and file names should be the same for 'test' and 'ground_truth'"
     print("Anomaly folders and file names in 'test' and 'ground_truth' are the same.")
 
-def save_database(df):
+def clean_database(df):
     print("Images are well structured in the data set.")
-    print("> remove 'name' columns, reorder columns and save database to disk")
+    print("> remove 'name' column, reorder columns")
     df = df.drop(columns=["name"]).reset_index(drop=True)
     df = df.loc[:, ["subset", "anomaly", "file"]]
-    df.to_csv(data_raw_file)
     print(df.head())
     return df
 
-print("> create file database reading the MVTec AD folder structure")
+def load_data(data_raw_path):
+    print("> create file database reading the MVTec AD folder structure")
 
-db = create_file_db(data_raw_dir)
-df = pd.DataFrame(db, columns=["path", "name", "extension", "file"])
-print(df.head())
+    db = create_file_db(data_raw_path)
+    df = pd.DataFrame(db, columns=["path", "name", "extension", "file"])
+    print(df.head())
 
-df = prepare_files(df)
-print(df.head())
+    df = prepare_files(df)
+    print(df.head())
 
-df = prepare_folders(df)
-print(df.head())
+    df = prepare_folders(df)
+    print(df.head())
 
-check_file_names(df)
+    check_file_names(df)
 
-check_consistency(df)
+    check_consistency(df)
 
-df = save_database(df)
+    df = clean_database(df)
 
-print("\n> summary")
-print(df.groupby(["subset", "anomaly"]).agg("count").sort_values(by="subset", ascending=False))
+    print("\n> summary")
+    print(df.groupby(["subset", "anomaly"]).agg("count").sort_values(by="subset", ascending=False))
+
+    return df

@@ -1,0 +1,17 @@
+services:
+  data:
+    container_name: data-$CATEGORY
+    working_dir: /app
+    build:
+      context: ./apps/data/
+      # dockerfile: ./src/data/Dockerfile
+    volumes:
+      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
+      - $DATA_PATH:/app/data/processed
+      - $REPORTS_PATH:/app/reports
+    environment:
+      - DATA_RAW_PATH=$VIRTUAL_DATA_RAW_PATH
+      - DATA_PATH=./data/processed
+      - DATA_CLEAN_DB=$DATA_CLEAN_DB
+      - REPORTS_PATH=./reports
+      - PYTHONUNBUFFERED=1

@@ -1,18 +1,10 @@
 import pandas as pd
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-data_raw_file = os.environ["DATA_RAW_FILE"]
-data_clean_file = os.environ["DATA_CLEAN_FILE"]
-data_stats_file = os.environ["DATA_STATS_FILE"]
-reports_dir = os.environ["REPORTS_DIR"]
-
-os.makedirs(reports_dir, exist_ok=True)
-
-def count_images(df):
+def count_images(df, reports_path):
     df = df.copy()
     df = df[df.subset != "ground_truth"]
     df.loc[df.subset == "train", "type"] = "train good"
@@ -26,7 +18,7 @@ def count_images(df):
     plt.title("Image count")
     plt.xlabel("count")
     plt.ylabel("subset")
-    plt.savefig(os.path.join(reports_dir, "image_count.png"))
+    plt.savefig(os.path.join(reports_path, "image_count.png"))
     plt.close()
 
 def calc_statistics(df):
@@ -98,22 +90,16 @@ def calc_mask_coverage(df):
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "anomaly_coverage"] = df[(df.subset == "ground_truth")].anomaly_coverage.values
     return df
 
-def save_database(df):
-    df.to_csv(data_stats_file)
-    df = df.copy()
-    print("> save database for modeling")
-    df = df[["subset", "anomaly", "img_size", "grayscale", "anomaly_coverage", "file"]]
-    df.to_csv(data_clean_file)
+def analyze_data(df, reports_path):
+    print(reports_path)
+    print(df.head())
+
+    count_images(df, reports_path)
+    df = calc_statistics(df)
+    df = calc_image_dimensions(df)
+    df = calc_image_color(df)
+    df = calc_mask_coverage(df)
+
+    print(df.head())
+
     return df
-
-df = pd.read_csv(data_raw_file, index_col=0)
-print(df.head())
-
-count_images(df)
-df = calc_statistics(df)
-df = calc_image_dimensions(df)
-df = calc_image_color(df)
-df = calc_mask_coverage(df)
-df = save_database(df)
-
-print(df.head())
