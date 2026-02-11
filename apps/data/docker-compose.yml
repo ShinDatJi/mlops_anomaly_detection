@@ -4,7 +4,6 @@ services:
     working_dir: /app
     build:
       context: ./apps/data/
-      # dockerfile: ./src/data/Dockerfile
     volumes:
       - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
       - $DATA_PATH:/app/data/processed

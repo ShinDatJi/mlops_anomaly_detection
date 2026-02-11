@@ -43,18 +43,36 @@ run-modeling:
 clean-modeling:
 	docker compose -f apps/modeling/docker-compose.yml --env-file .env --env-file apps/modeling/.env --project-directory ./ down
 
+# prediction
+init-prediction:
+	cp apps/prediction/default.env apps/prediction/.env
+build-prediction:
+	docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./ build prediction
+dev-prediction:
+	docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./ up --build
+connect-prediction:
+	docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./ run --build prediction sh
+run-prediction:
+	docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./ up
+clean-prediction:
+	docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./ down
+
 #all
 init-all:
 	init
 	init-data
 	init-modeling
+	init-prediction
 build-all:
 	build-data
 	build-modeling
+	build-prediction
 run-all:
 	run-data
 	run-modeling
+	run-prediction
 clean-all:
 	clean-data
 	clean-modeling
+	clean-prediction
 	

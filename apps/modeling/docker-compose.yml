@@ -5,7 +5,6 @@ services:
     build:
       context: ./apps/modeling/
       target: modeling_preprocessing
-      # dockerfile: ./src/data/Dockerfile
     volumes:
       - $CONFIG_FILE:/app/config.json:ro
       - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
@@ -32,7 +31,6 @@ services:
     build:
       context: ./apps/modeling/
       target: modeling_training
-      # dockerfile: ./src/data/Dockerfile
     volumes:
       - $CONFIG_FILE:/app/config.json:ro
       - $DATA_PATH:/app/data/processed:ro
@@ -59,7 +57,6 @@ services:
     build:
       context: ./apps/modeling/
       target: modeling_evaluation
-      # dockerfile: ./src/data/Dockerfile
     volumes:
       - $CONFIG_FILE:/app/config.json:ro
       - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro

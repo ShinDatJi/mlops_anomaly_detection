@@ -1,0 +1,15 @@
+services:
+  prediction:
+    container_name: prediction-api
+    working_dir: /app
+    build:
+      context: ./apps/prediction/
+    ports:
+      - $PREDICTION_PORT:8000
+    volumes:
+      - $MODELS_PATH:/app/$VIRTUAL_MODELS_PATH:ro
+    environment:
+      - MODELS_DIR=$VIRTUAL_MODELS_PATH
+      - LOG_LEVEL=$LOG_LEVEL
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=1
