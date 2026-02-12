@@ -3,42 +3,59 @@ Project Name
 
 This repo is a Starting Pack for DS projects. You can rearrange the structure to make it fits your project.
 
+Prediction API
+------------
+
+The prediction service is maintained only under `apps/prediction`.
+Root-level API duplicates were removed.
+
+Quick start from repository root:
+
+```bash
+make init-prediction
+make build-prediction
+make run-prediction
+```
+
+API endpoints:
+
+- `GET http://localhost:8000/status`
+- `POST http://localhost:8000/predict/{category}` with multipart file field `image`
+
+For app-specific details, see `apps/prediction/README.md`.
+
 Project Organization
 ------------
 
     ├── LICENSE
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data               <- Should be in your computer but not on Github (only in .gitignore)
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's name, and a short `-` delimited description, e.g.
-    │                         `1.0-alban-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, links, and all other explanatory materials.
-    │
-    ├── reports            <- The reports that you'll make during this project as PDF
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   ├── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │   │   └── visualize.py
+    ├── README.md
+    ├── Makefile
+    ├── apps
+    │   ├── data
+    │   │   ├── default.env
+    │   │   ├── docker-compose.yml
+    │   │   ├── Dockerfile
+    │   │   ├── pyproject.toml
+    │   │   └── src
+    │   ├── modeling
+    │   │   ├── default.env
+    │   │   ├── docker-compose.yml
+    │   │   ├── Dockerfile
+    │   │   ├── pyproject.toml
+    │   │   └── src
+    │   └── prediction
+    │       ├── default.env
+    │       ├── docker-compose.yml
+    │       ├── Dockerfile
+    │       ├── pyproject.toml
+    │       ├── uv.lock
+    │       └── src
+    ├── data
+    │   ├── processed
+    │   └── raw
+    ├── models
+    ├── references
+    └── reports
 
 --------
 

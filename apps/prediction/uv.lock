@@ -1,0 +1,5 @@
+# Generate this lock file with:
+#   cd apps/prediction
+#   uv lock
+#
+# This placeholder keeps the app structure aligned with other apps.
