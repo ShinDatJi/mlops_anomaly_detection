@@ -3,12 +3,25 @@ name = "modeling"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "~=3.12.0"
+
 dependencies = [
     "opencv-python-headless==4.12.0.88",
     "pandas==2.3.3",
     "seaborn==0.13.2",
     "keras==3.12.0",
     "scikit-learn==1.7.2",
-    "tensorflow==2.20.0"
+    "tensorflow==2.20.0",
+    "mlflow==3.9.0",
+    "numpy==2.2.6",
 ]
+
+[project.scripts]
+load_initial_models = "modeling.setup.load_initial_models:main"
+preprocess_data = "modeling.preprocessing.preprocess_data:main"
+train_model = "modeling.training.train_model:main"
+evaluate_model = "modeling.evaluation.evaluate_model:main"
+
+[build-system]
+requires = ["uv_build>=0.9.28,<0.10.0"]
+build-backend = "uv_build"

@@ -13,13 +13,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
 # copy files
-COPY src/*.py src/
 COPY .python-version .
 COPY pyproject.toml .
 COPY uv.lock .
+COPY README.md .
+COPY src src
 
 # Sync project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-CMD ["uv", "run", "src/main.py"]
+CMD ["/app/.venv/bin/ingest_data"]

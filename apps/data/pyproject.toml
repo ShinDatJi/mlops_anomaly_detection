@@ -3,9 +3,16 @@ name = "data"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
     "opencv-python-headless==4.12.0.88",
     "pandas==2.3.3",
     "seaborn==0.13.2",
 ]
+
+[project.scripts]
+ingest_data = "data.ingest_data:main"
+
+[build-system]
+requires = ["uv_build>=0.9.28,<0.10.0"]
+build-backend = "uv_build"

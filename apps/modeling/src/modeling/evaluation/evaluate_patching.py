@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import cv2
 import os
-import evaluate_simple
+import modeling.evaluation.evaluate_simple as evaluate_simple
 
 def plot_false_predictions(df_predict, df_predict_patch, patches_x, patches_y, threshold, report_path=None):
     patched_pred_proba = df_predict_patch.pred_proba.values.reshape((-1, patches_x * patches_y))
