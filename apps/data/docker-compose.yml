@@ -6,8 +6,8 @@ services:
       context: ./apps/data/
     volumes:
       - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed
-      - $REPORTS_PATH:/app/reports
+      - $DATA_PATH:/app/data/processed:rw
+      - $REPORTS_PATH:/app/reports:rw
     environment:
       - DATA_RAW_PATH=$VIRTUAL_DATA_RAW_PATH
       - DATA_PATH=./data/processed

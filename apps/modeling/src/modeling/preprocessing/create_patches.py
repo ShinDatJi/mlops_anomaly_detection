@@ -149,11 +149,11 @@ def create_patches(
         print("  1 oversampling:", count)
 
     print(stats)
-            
+
     return {
         "images_good_source": len(df[df.anomaly == "good"]),
         "images_bad_source": len(df[df.anomaly != "good"]),
         "oversampling": count,
         "images_good": count_0,
         "images_bad": count_1,
-    }, threshold
+    }, threshold, stats

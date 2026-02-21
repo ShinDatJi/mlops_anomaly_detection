@@ -1,7 +1,7 @@
 import os
-from load_data import load_data
-from analyze_data import analyze_data
-from visualize_data import visualize_data
+from data.load_data import load_data
+from data.analyze_data import analyze_data
+from data.visualize_data import visualize_data
 
 def clean_database(df):
     df = df.copy()

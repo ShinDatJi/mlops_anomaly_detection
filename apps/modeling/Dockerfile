@@ -16,19 +16,21 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY .python-version .
 COPY pyproject.toml .
 COPY uv.lock .
+COPY README.md .
+COPY src src
 
 # Sync project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
+FROM modeling_base AS modeling_setup
+CMD ["/app/.venv/bin/load_initial_models"]
+
 FROM modeling_base AS modeling_preprocessing
-COPY src/preprocessing/*.py src/
-CMD ["uv", "run", "src/preprocess_data.py"]
+CMD ["/app/.venv/bin/preprocess_data"]
 
 FROM modeling_base AS modeling_training
-COPY src/training/*.py src/
-CMD ["uv", "run", "src/train_model.py"]
+CMD ["/app/.venv/bin/train_model"]
 
 FROM modeling_base AS modeling_evaluation
-COPY src/evaluation/*.py src/
-CMD ["uv", "run", "src/evaluate_model.py"]
+CMD ["/app/.venv/bin/evaluate_model"]
