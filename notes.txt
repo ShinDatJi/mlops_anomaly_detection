@@ -4,6 +4,7 @@ init new project: uv init apps/APP --no-workspace
 add library: uv add --directory apps/APP lib==1.2.0
 run python script: uv run apps/APP/src/SCRIPT.py
 sync: uv sync --directory apps/APP
+run project script: CATEGORY=bottle uv run --env-file apps/APP/.env --project apps/APP PROJECT_SCRIPT
 
 make workflow:
 windows:

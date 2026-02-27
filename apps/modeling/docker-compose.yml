@@ -1,14 +1,14 @@
 x-environment: &default-environment
-  CATEGORY: $CATEGORY
-  DATA_CLEAN_DB: $DATA_CLEAN_DB
-  DATA_TRAIN_DB: $DATA_TRAIN_DB
-  DATA_TEST_DB: $DATA_TEST_DB
-  DATA_TRAIN_DIR: $DATA_TRAIN_DIR
-  DATA_TEST_DIR: $DATA_TEST_DIR
-  DATA_TEST_PATCHING_DIR: $DATA_TEST_PATCHING_DIR
-  REPORTS_REPORT: $REPORTS_REPORT
-  REPORTS_MODEL: $REPORTS_MODEL
-  TRACKING_URI: $TRACKING_URI
+  CATEGORY: ${CATEGORY}
+  DATA_CLEAN_DB: ${DATA_CLEAN_DB}
+  DATA_TRAIN_DB: ${DATA_TRAIN_DB}
+  DATA_TEST_DB: ${DATA_TEST_DB}
+  DATA_TRAIN_DIR: ${DATA_TRAIN_DIR}
+  DATA_TEST_DIR: ${DATA_TEST_DIR}
+  DATA_TEST_PATCHING_DIR: ${DATA_TEST_PATCHING_DIR}
+  REPORTS_REPORT: ${REPORTS_REPORT}
+  REPORTS_MODEL: ${REPORTS_MODEL}
+  MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
 
 x-flags: &default-flags
   PYTHONUNBUFFERED: 1
@@ -23,19 +23,39 @@ services:
       context: ./apps/modeling/
       target: modeling_setup
     volumes:
-      - $MODELS_PATH:/app/models:ro
+      - ${MODELS_PATH}:/app/models:ro
     environment:
       <<: [*default-flags]
-      MODELS_PATH: models
-      MODELS_CONFIG: $MODELS_CONFIG
-      MODELS_REPORT: $MODELS_REPORT
-      MODELS_MODEL: $MODELS_MODEL
-      TRACKING_URI: $TRACKING_URI
+      MODELS_PATH: ./models
+      MODELS_CONFIG: ${MODELS_CONFIG}
+      MODELS_REPORT: ${MODELS_REPORT}
+      MODELS_MODEL: ${MODELS_MODEL}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
     networks:
-      - mlflow-network
+      - mlflow
+
+  modeling-loading:
+    container_name: modeling-loading-${CATEGORY}
+    working_dir: /app
+    build:
+      context: ./apps/modeling/
+      target: modeling_loading
+    volumes:
+      - raw_data:/app/${S3_DATA_RAW_PATH}:rw
+      - ${DATA_PATH}:/app/data/processed:rw
+    environment:
+      <<: [*default-environment, *default-flags]
+      DATA_PATH: ./data/processed
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_CLEAN_DB_FILE: ${S3_CLEAN_DB_FILE}
+    networks:
+      - minio
 
   modeling-preprocessing:
-    container_name: modeling-preprocessing-$CATEGORY
+    container_name: modeling-preprocessing-${CATEGORY}
     working_dir: /app
     build:
       context: ./apps/modeling/
@@ -44,19 +64,20 @@ services:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:rw
-      - $REPORTS_PREPROCESSING_PATH:/app/reports:rw
+      # - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
+      - raw_data:/app/${S3_DATA_RAW_PATH}:ro
+      - ${DATA_PATH}:/app/data/processed:rw
+      - ${REPORTS_PREPROCESSING_PATH}:/app/reports:rw
     environment:
       <<: [*default-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_PREPROCESSING_PATH: reports
+      DATA_PATH: ./data/processed
+      REPORTS_PREPROCESSING_PATH: ./reports
     networks:
-      - mlflow-network
+      - mlflow
 
   modeling-training:
-    container_name: modeling-training-$CATEGORY
+    container_name: modeling-training-${CATEGORY}
     working_dir: /app
     build:
       context: ./apps/modeling/
@@ -65,21 +86,21 @@ services:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_PATH:/app/data/processed:ro
-      - $REPORTS_PREPROCESSING_PATH:/app/reports_preprocessing:ro
-      - $REPORTS_TRAINING_PATH:/app/reports:rw
+      - ${DATA_PATH}:/app/data/processed:ro
+      - ${REPORTS_PREPROCESSING_PATH}:/app/reports_preprocessing:ro
+      - ${REPORTS_TRAINING_PATH}:/app/reports:rw
     environment:
       <<: [*default-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_PREPROCESSING_PATH: reports_preprocessing
-      REPORTS_TRAINING_PATH: reports
-      MAX_EPOCHS: $MAX_EPOCHS
+      DATA_PATH: ./data/processed
+      REPORTS_PREPROCESSING_PATH: ./reports_preprocessing
+      REPORTS_TRAINING_PATH: ./reports
+      MAX_EPOCHS: ${MAX_EPOCHS}
     networks:
-      - mlflow-network
+      - mlflow
 
   modeling-evaluation:
-    container_name: modeling-evaluation-$CATEGORY
+    container_name: modeling-evaluation-${CATEGORY}
     working_dir: /app
     build:
       context: ./apps/modeling/
@@ -88,23 +109,28 @@ services:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:ro
-      - $REPORTS_TRAINING_PATH:/app/reports_training:ro
-      - $REPORTS_EVALUATION_PATH:/app/reports:rw
+      - raw_data:/app/${S3_DATA_RAW_PATH}:ro
+      - ${DATA_PATH}:/app/data/processed:ro
+      - ${REPORTS_TRAINING_PATH}:/app/reports_training:ro
+      - ${REPORTS_EVALUATION_PATH}:/app/reports:rw
     environment:
       <<: [*default-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_TRAINING_PATH: reports_training
-      REPORTS_EVALUATION_PATH: reports
+      DATA_PATH: ./data/processed
+      REPORTS_TRAINING_PATH: ./reports_training
+      REPORTS_EVALUATION_PATH: ./reports
     networks:
-      - mlflow-network
+      - mlflow
 
 configs:
   config:
-    file: $CONFIG_FILE
+    file: ${CONFIG_FILE}
 
 networks:
-  mlflow-network:
+  mlflow:
     external: true
+  minio:
+    external: true
+
+volumes:
+  raw_data:

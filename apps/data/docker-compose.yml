@@ -1,16 +1,30 @@
 services:
   data:
-    container_name: data-$CATEGORY
+    container_name: data-${CATEGORY}
     working_dir: /app
     build:
       context: ./apps/data/
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:rw
-      - $REPORTS_PATH:/app/reports:rw
+      - ${DATA_RAW_PATH}:/app/${S3_DATA_RAW_PATH}:ro
+      - ${REPORTS_PATH}:/app/reports:rw
     environment:
-      - DATA_RAW_PATH=$VIRTUAL_DATA_RAW_PATH
-      - DATA_PATH=./data/processed
-      - DATA_CLEAN_DB=$DATA_CLEAN_DB
-      - REPORTS_PATH=./reports
-      - PYTHONUNBUFFERED=1
+      CATEGORY: ${CATEGORY}
+      DATA_RAW_PATH: ${S3_DATA_RAW_PATH}
+      REPORTS_PATH: ./reports
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_CLEAN_DB_FILE: ${S3_CLEAN_DB_FILE}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      PYTHONUNBUFFERED: 1
+      GIT_PYTHON_REFRESH: silent
+    networks:
+      - minio
+      - mlflow
+
+networks:
+  minio:
+    external: true
+  mlflow:
+    external: true

@@ -16,7 +16,7 @@ def _load_model(config_file, report_file, model_file, category):
     params = tools.extract_params_from_report(report)
     metrics = tools.extract_evaluation_metrics_from_report(report)
 
-    mlflow.set_tracking_uri(os.environ["TRACKING_URI"])
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
     mlflow.set_experiment(f"initial-{category}")
     mlflow.set_experiment_tags({"stage": "initial", "dataset": category})
 
