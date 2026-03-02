@@ -1,0 +1,7 @@
+name: data_quality
+preset: data_quality
+column_mapping:
+  prediction: prediction
+  target: target
+  numerical_features: []
+  categorical_features: []

@@ -9,6 +9,7 @@ dependencies = [
     "keras==3.12.0",
     "numpy>=2.2.6",
     "opencv-python-headless==4.12.0.88",
+    "prometheus-client>=0.21.0",
     "python-multipart>=0.0.9",
     "tensorflow==2.20.0",
     "uvicorn>=0.30.0",

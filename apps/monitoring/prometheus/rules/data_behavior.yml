@@ -1,0 +1,50 @@
+groups:
+  - name: data-behavior
+    rules:
+      - alert: InputDataDriftHigh
+        expr: evidently_data_drift_score > 0.5
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Input data drift score is high"
+
+      - alert: InputDataMissingRateHigh
+        expr: evidently_missing_values_share > 0.05
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Input missing-value share is high"
+
+      - alert: MissingImageFileRateHigh
+        expr: evidently_missing_image_file_rate > 0.02
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Missing image file rate is high"
+
+      - alert: IncorrectImageFileRateHigh
+        expr: evidently_incorrect_image_file_rate > 0.02
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Incorrect image file rate is high"
+
+      - alert: InvalidCategoriesRateHigh
+        expr: evidently_invalid_categories_rate > 0.01
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Invalid categories rate is high"
+
+      - alert: OutliersRateHigh
+        expr: evidently_outliers_rate > 0.1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outliers rate is high"

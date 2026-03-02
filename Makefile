@@ -77,6 +77,17 @@ start-prediction:
 stop-prediction:
 	$(PREDICTION_CMD) down
 
+# monitoring
+MONITORING_CMD = docker compose -f apps/monitoring/docker-compose.yml --env-file .env --env-file apps/monitoring/.env --project-directory ./
+init-monitoring:
+	cp apps/monitoring/default.env apps/monitoring/.env
+build-monitoring:
+	$(MONITORING_CMD) build
+start-monitoring:
+	$(MONITORING_CMD) up -d --build
+stop-monitoring:
+	$(MONITORING_CMD) down
+
 #all
 init-all:
 	init
@@ -84,6 +95,7 @@ init-all:
 	init-data
 	init-modeling
 	init-prediction
+	init-monitoring
 build-all:
 	build-mlflow
 	build-data
@@ -92,8 +104,10 @@ build-all:
 start-all:
 	start-mlflow
 	start-prediction
+	start-monitoring
 setup-all:
 	setup-modeling
 stop-all:
 	stop-mlflow
 	stop-prediction
+	stop-monitoring

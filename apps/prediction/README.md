@@ -5,6 +5,7 @@ Containerized FastAPI service for anomaly prediction.
 ## Endpoints
 
 - `GET /status` -> `{ "status": "ok" }`
+- `GET /metrics` -> Prometheus metrics
 - `POST /predict/{category}` with multipart file field `image` -> `{ "defective": bool }`
 
 ## Environment
@@ -21,6 +22,12 @@ Variables:
 - `MODELS_PATH`: host path to model directory (default `./models`)
 - `VIRTUAL_MODELS_PATH`: container path for mounted models (default `./models`)
 - `LOG_LEVEL`: API log level (`INFO`, `DEBUG`, ...)
+- `MONITORING_REPORTS_PATH`: host path for monitoring artifacts (default `./reports/monitoring`)
+- `VIRTUAL_MONITORING_REPORTS_PATH`: container mount path for monitoring artifacts
+- `MONITORING_EVENTS_FILE`: file path relative to mounted monitoring path for jsonl events
+- `MLFLOW_MODEL_NAME`: deployed model name label for metrics/events
+- `MLFLOW_MODEL_VERSION`: deployed model version label for metrics/events
+- `MLFLOW_RUN_ID`: optional run identifier label for metrics/events
 
 ## Build and Run
 
@@ -45,6 +52,18 @@ curl http://localhost:8000/status
 curl -X POST "http://localhost:8000/predict/bottle" \
   -F "image=@/path/to/image.png"
 ```
+
+Interactive test helper (prompts for category and image number):
+
+```bash
+./apps/prediction/scripts/send_prediction_event.sh
+```
+
+Optional env vars:
+
+- `API_URL` (default: `http://localhost:8000`)
+- `MVTec_ROOT` (default: `./data/mvtec_anomaly_detection`)
+- `MVTec_SPLIT` (default: `test/good`)
 
 ## Lock file
 
