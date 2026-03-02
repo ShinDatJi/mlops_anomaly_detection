@@ -1,0 +1,22 @@
+groups:
+  - name: traffic-performance
+    rules:
+      - alert: PredictionAPIHighErrorRate
+        expr: |
+          sum(rate(prediction_requests_total{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(prediction_requests_total[5m])), 1)
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prediction API high 5xx ratio"
+
+      - alert: PredictionAPIP99LatencyHigh
+        expr: histogram_quantile(0.99, sum(rate(prediction_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prediction API p99 latency above 2s"

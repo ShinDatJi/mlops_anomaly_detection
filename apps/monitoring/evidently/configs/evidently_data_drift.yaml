@@ -1,0 +1,7 @@
+name: data_drift
+preset: data_drift
+column_mapping:
+  prediction: prediction
+  target: target
+  numerical_features: []
+  categorical_features: []

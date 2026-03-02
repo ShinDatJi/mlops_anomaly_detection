@@ -1,0 +1,16 @@
+[project]
+name = "monitoring-evidently"
+version = "0.1.0"
+description = "Evidently monitoring job/exporter"
+requires-python = ">=3.12"
+dependencies = [
+  "evidently>=0.6.0",
+  "pandas>=2.2.0",
+  "pyarrow>=18.0.0",
+  "prometheus-client>=0.21.0",
+  "mlflow>=3.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
