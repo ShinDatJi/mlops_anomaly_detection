@@ -115,7 +115,7 @@ def main():
     params = tools.extract_params_from_report(report)
     metrics = tools.extract_preprocessing_metrics_from_report(report)
 
-    mlflow.set_tracking_uri(os.environ["TRACKING_URI"])
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
     mlflow.set_experiment(f"preprocessing-{category}")
     mlflow.set_experiment_tags({"stage": "preprocessing", "dataset": category})
 
@@ -124,6 +124,8 @@ def main():
         mlflow.log_metrics(metrics)
         mlflow.log_dict(config, "config.json")
         mlflow.log_dict(report, "report.json")
+        mlflow.log_artifact(train_db_file)
+        mlflow.log_artifact(test_db_file)
 
 if __name__ == "__main__":
     main()

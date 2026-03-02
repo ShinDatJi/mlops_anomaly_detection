@@ -26,6 +26,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM modeling_base AS modeling_setup
 CMD ["/app/.venv/bin/load_initial_models"]
 
+FROM modeling_base AS modeling_loading
+CMD ["/app/.venv/bin/load_raw_data"]
+
 FROM modeling_base AS modeling_preprocessing
 CMD ["/app/.venv/bin/preprocess_data"]
 

@@ -220,7 +220,7 @@ def main():
     params = tools.extract_params_from_report(report)
     metrics = tools.extract_training_metrics_from_report(report)
         
-    mlflow.set_tracking_uri(os.environ["TRACKING_URI"])
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
     mlflow.set_experiment(f"training-{category}")
     mlflow.set_experiment_tags({"stage": "training", "dataset": category})
 
