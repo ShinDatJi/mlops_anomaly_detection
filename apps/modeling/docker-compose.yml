@@ -6,6 +6,7 @@ x-environment: &default-environment
   DATA_TRAIN_DIR: ${DATA_TRAIN_DIR}
   DATA_TEST_DIR: ${DATA_TEST_DIR}
   DATA_TEST_PATCHING_DIR: ${DATA_TEST_PATCHING_DIR}
+  REPORTS_CONFIG: ${REPORTS_CONFIG}
   REPORTS_REPORT: ${REPORTS_REPORT}
   REPORTS_MODEL: ${REPORTS_MODEL}
   MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
@@ -41,11 +42,17 @@ services:
       context: ./apps/modeling/
       target: modeling_loading
     volumes:
+      - ${CONFIG_FILE}:/app/config.json:ro
       - raw_data:/app/${S3_DATA_RAW_PATH}:rw
       - ${DATA_PATH}:/app/data/processed:rw
+      - ${REPORTS_PATH}:/app/reports:rw
     environment:
       <<: [*default-environment, *default-flags]
+      CONFIG_FILE: config.json
+      CONFIG_FROM_MODEL_REGISTRY: ${CONFIG_FROM_MODEL_REGISTRY}
+      CONFIG_FROM_MODEL_REGISTRY_ALIAS: ${CONFIG_FROM_MODEL_REGISTRY_ALIAS}
       DATA_PATH: ./data/processed
+      REPORTS_PATH: ./reports
       S3_ENDPOINT: ${S3_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -53,6 +60,7 @@ services:
       S3_CLEAN_DB_FILE: ${S3_CLEAN_DB_FILE}
     networks:
       - minio
+      - mlflow
 
   modeling-preprocessing:
     container_name: modeling-preprocessing-${CATEGORY}
@@ -124,7 +132,7 @@ services:
 
 configs:
   config:
-    file: ${CONFIG_FILE}
+    file: ${REPORTS_PATH}/${REPORTS_CONFIG}
 
 networks:
   mlflow:

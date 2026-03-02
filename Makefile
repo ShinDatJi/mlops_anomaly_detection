@@ -8,7 +8,7 @@ init-minio:
 build-minio:
 	$(MINIO_CMD) build
 start-minio:
-	$(MINIO_CMD) up -d --wait
+	$(MINIO_CMD) up -d
 stop-minio:
 	$(MINIO_CMD) down
 
