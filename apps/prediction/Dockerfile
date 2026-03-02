@@ -7,7 +7,7 @@ ENV UV_LINK_MODE=copy
 WORKDIR /app
 
 # Copy files
-COPY src/*.py src/
+COPY src src
 COPY .python-version .
 COPY pyproject.toml .
 

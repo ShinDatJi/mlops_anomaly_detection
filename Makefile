@@ -109,6 +109,17 @@ start-prediction:
 stop-prediction:
 	$(PREDICTION_CMD) down
 
+# monitoring
+MONITORING_CMD = docker compose -f apps/monitoring/docker-compose.yml --env-file .env --env-file apps/monitoring/.env --project-directory ./
+init-monitoring:
+	cp apps/monitoring/default.env apps/monitoring/.env
+build-monitoring:
+	$(MONITORING_CMD) build
+start-monitoring:
+	$(MONITORING_CMD) up -d --build
+stop-monitoring:
+	$(MONITORING_CMD) down
+
 #all
 init-all:
 	$(MAKE) init
@@ -118,6 +129,7 @@ init-all:
 	$(MAKE) init-data
 	$(MAKE) init-modeling
 	$(MAKE) init-prediction
+	$(MAKE) init-monitoring
 build-all:
 	$(MAKE) build-mlflow
 	$(MAKE) build-airflow
@@ -129,11 +141,13 @@ start-all:
 	$(MAKE) start-mlflow
 	$(MAKE) start-airflow
 	$(MAKE) start-prediction
+	$(MAKE) start-monitoring
 stop-all:
 	$(MAKE) stop-minio
 	$(MAKE) stop-mlflow
 	$(MAKE) stop-airflow
 	$(MAKE) stop-prediction
+	$(MAKE) stop-monitoring
 
 start-demo:
 	uv run --env-file .env --project ./demo/ streamlit run demo/src/app.py
