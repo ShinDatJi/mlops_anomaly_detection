@@ -46,9 +46,11 @@ docker compose \
 - `MONITORING_MODE=minimal`
   - keeps: `evidently_anomaly_rate`, `evidently_output_drift_score`, `evidently_data_quality_issues_rate`, `evidently_data_drift_score`
   - keeps API traffic metrics from the prediction service
+  - provisioned dashboards: `grafana/dashboards/minimal/` (`API Traffic & Performance`, `Model Performance`)
   - designed as default operational mode with low noise
 - `MONITORING_MODE=full`
   - enables detailed data quality/error metrics and optional label-based metrics
+  - additional dashboards can be kept under `grafana/dashboards/full/`
 
 Optional flags:
 - `ENABLE_DETAILED_DATA_QUALITY_METRICS=true|false`

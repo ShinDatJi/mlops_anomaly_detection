@@ -52,13 +52,13 @@
     },
     {
       "datasource": "Prometheus",
-      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
       "id": 4,
       "targets": [
-        {"expr": "evidently_model_f1_score{category=\"all\"}", "legendFormat": "f1", "refId": "A"}
+        {"expr": "evidently_data_quality_issues_rate{category=\"all\"}", "legendFormat": "quality issues", "refId": "A"}
       ],
-      "title": "Observed F1 (when labels exist)",
+      "title": "Data Quality Issues Rate",
       "type": "timeseries"
     }
   ],
@@ -72,6 +72,6 @@
   "timezone": "browser",
   "title": "Model Performance",
   "uid": "model-performance",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
