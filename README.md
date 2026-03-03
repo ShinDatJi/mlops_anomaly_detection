@@ -22,6 +22,10 @@ API endpoints:
 - `GET http://localhost:8000/status`
 - `POST http://localhost:8000/predict/{category}` with multipart file field `image`
 
+Monitoring modes:
+- `minimal` (default): core operational metrics only (`anomaly_rate`, `output_drift_score`, drift, data quality issues, API traffic/performance)
+- `full`: detailed data quality/error metrics and label-based metrics
+
 For app-specific details, see `apps/prediction/README.md`.
 
 Project Organization
