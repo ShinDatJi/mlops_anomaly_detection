@@ -10,6 +10,10 @@ from src.export_prom_metrics import publish_summary
 from src.reports import run_evidently_reports
 
 
+def _is_enabled(var_name: str, default: bool) -> bool:
+    return os.getenv(var_name, str(default).lower()).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def run_once() -> None:
     reports_root = Path("/app/reports/monitoring")
     reference_path = Path(os.getenv("EVIDENTLY_REFERENCE_PATH", str(reports_root / "evidently" / "reference.parquet")))
@@ -21,7 +25,24 @@ def run_once() -> None:
 
     reference_df = prepare_prediction_dataframe(load_dataset(reference_path))
     current_df = prepare_prediction_dataframe(load_dataset(current_path))
-    summary, report_payload = run_evidently_reports(reference_df, current_df, html_output, json_output)
+    monitoring_mode = os.getenv("MONITORING_MODE", "full").strip().lower()
+    enable_detailed_metrics = _is_enabled(
+        "ENABLE_DETAILED_DATA_QUALITY_METRICS",
+        default=(monitoring_mode != "minimal"),
+    )
+    enable_label_metrics = _is_enabled(
+        "ENABLE_LABEL_BASED_METRICS",
+        default=(monitoring_mode != "minimal"),
+    )
+    summary, report_payload = run_evidently_reports(
+        reference_df,
+        current_df,
+        html_output,
+        json_output,
+        monitoring_mode=monitoring_mode,
+        enable_detailed_metrics=enable_detailed_metrics,
+        enable_label_metrics=enable_label_metrics,
+    )
 
     base_labels = {
         "model_name": os.getenv("MLFLOW_MODEL_NAME", "unknown"),
@@ -41,7 +62,15 @@ def run_once() -> None:
         reference_slice = reference_df[reference_df["category"] == category] if "category" in reference_df.columns else reference_df
         category_html = reports_root / "evidently" / "html" / f"{category}_report.html"
         category_json = reports_root / "evidently" / "json" / f"{category}_report.json"
-        category_summary, _ = run_evidently_reports(reference_slice, current_slice, category_html, category_json)
+        category_summary, _ = run_evidently_reports(
+            reference_slice,
+            current_slice,
+            category_html,
+            category_json,
+            monitoring_mode=monitoring_mode,
+            enable_detailed_metrics=enable_detailed_metrics,
+            enable_label_metrics=enable_label_metrics,
+        )
         publish_summary({"category": category, **base_labels}, category_summary)
 
     out_dir = reports_root / "evidently" / "json"
