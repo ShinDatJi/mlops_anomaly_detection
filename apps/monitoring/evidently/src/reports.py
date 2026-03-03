@@ -129,6 +129,9 @@ def run_evidently_reports(
     current_df: pd.DataFrame,
     output_html: Path,
     output_json: Path,
+    monitoring_mode: str = "full",
+    enable_detailed_metrics: bool = True,
+    enable_label_metrics: bool = True,
 ) -> Tuple[Dict[str, float], Dict[str, Any]]:
     """Run Evidently presets and return summary values plus raw report dict."""
     output_html.parent.mkdir(parents=True, exist_ok=True)
@@ -159,7 +162,11 @@ def run_evidently_reports(
             json.dump(payload, f, indent=2)
         return summary, payload
 
-    if {"prediction", "target"}.issubset(reference_success_df.columns) and {"prediction", "target"}.issubset(current_success_df.columns):
+    if (
+        enable_label_metrics
+        and {"prediction", "target"}.issubset(reference_success_df.columns)
+        and {"prediction", "target"}.issubset(current_success_df.columns)
+    ):
         metrics.append(ClassificationPreset())
 
     column_mapping = ColumnMapping(prediction="prediction", target="target")
@@ -190,24 +197,27 @@ def run_evidently_reports(
         anomaly_rate=(float(current_success_df["prediction"].mean()) if "prediction" in current_success_df.columns else 0.0),
         prediction_positive_rate=(float(current_success_df["prediction"].mean()) if "prediction" in current_success_df.columns else 0.0),
         reference_positive_rate=(float(reference_success_df["prediction"].mean()) if "prediction" in reference_success_df.columns else 0.0),
-        model_f1_score=_binary_f1_score(current_success_df),
-        missing_image_file_rate=_safe_rate(
+        model_f1_score=(_binary_f1_score(current_success_df) if enable_label_metrics else 0.0),
+    )
+
+    if enable_detailed_metrics:
+        summary.missing_image_file_rate = _safe_rate(
             int((current_df.get("error_type") == "missing_image_file").sum()) if "error_type" in current_df.columns else 0,
             len(current_df),
-        ),
-        incorrect_image_file_rate=_safe_rate(
+        )
+        summary.incorrect_image_file_rate = _safe_rate(
             int((current_df.get("error_type") == "incorrect_image_file").sum()) if "error_type" in current_df.columns else 0,
             len(current_df),
-        ),
-        invalid_categories_rate=_safe_rate(
+        )
+        summary.invalid_categories_rate = _safe_rate(
             int((current_df.get("error_type") == "invalid_category").sum()) if "error_type" in current_df.columns else 0,
             len(current_df),
-        ),
-        missing_categories_rate=_safe_rate(
+        )
+        summary.missing_categories_rate = _safe_rate(
             int((current_df.get("error_type") == "missing_category").sum()) if "error_type" in current_df.columns else 0,
             len(current_df),
-        ),
-        outliers_rate=_outlier_rate_iqr(current_success_df, "file_size_bytes"),
-    )
+        )
+        summary.outliers_rate = _outlier_rate_iqr(current_success_df, "file_size_bytes")
+
     summary.output_drift_score = abs(summary.anomaly_rate - summary.reference_positive_rate)
     return summary.__dict__, report_payload
