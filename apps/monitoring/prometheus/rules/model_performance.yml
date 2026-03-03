@@ -8,11 +8,3 @@ groups:
           severity: warning
         annotations:
           summary: "Output drift score is high"
-
-      - alert: ModelF1Dropped
-        expr: evidently_model_f1_score{category="all"} < 0.8
-        for: 30m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Observed model F1 dropped below threshold"
