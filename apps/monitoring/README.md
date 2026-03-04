@@ -34,7 +34,7 @@ docker compose \
 ## Notes
 
 - Evidently reads:
-  - reference data: `reports/monitoring/evidently/reference.parquet`
+  - reference data: `references/monitoring/evidently/reference.parquet`
   - current data: `reports/monitoring/inference_events/events.jsonl`
 - Reports are written to:
   - `reports/monitoring/evidently/html/latest_report.html`

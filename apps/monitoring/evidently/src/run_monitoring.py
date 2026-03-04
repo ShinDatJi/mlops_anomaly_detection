@@ -16,7 +16,8 @@ def _is_enabled(var_name: str, default: bool) -> bool:
 
 def run_once() -> None:
     reports_root = Path("/app/reports/monitoring")
-    reference_path = Path(os.getenv("EVIDENTLY_REFERENCE_PATH", str(reports_root / "evidently" / "reference.parquet")))
+    reference_root = Path("/app/references/monitoring")
+    reference_path = Path(os.getenv("EVIDENTLY_REFERENCE_PATH", str(reference_root / "evidently" / "reference.parquet")))
     current_path = Path(
         os.getenv("EVIDENTLY_CURRENT_PATH", str(reports_root / "inference_events" / "events.jsonl"))
     )
