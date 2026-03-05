@@ -5,27 +5,8 @@ from typing import Any, Dict, Tuple
 
 import pandas as pd
 
-try:
-    from evidently import Report
-except ImportError:
-    from evidently.report import Report
-
-try:
-    from evidently import ColumnMapping
-except ImportError:
-    try:
-        from evidently.legacy.pipeline.column_mapping import ColumnMapping
-    except ImportError:
-        from evidently.pipeline.column_mapping import ColumnMapping
-
-try:
-    from evidently.metric_preset import ClassificationPreset, DataDriftPreset, DataQualityPreset
-except ImportError:
-    from evidently.presets import ClassificationPreset, DataDriftPreset
-    try:
-        from evidently.presets import DataQualityPreset
-    except ImportError:
-        from evidently.presets import DataSummaryPreset as DataQualityPreset
+from evidently import Report
+from evidently import ClassificationPreset, DataDriftPreset, DataSummaryPreset
 
 @dataclass
 class MonitoringSummary:
@@ -124,6 +105,27 @@ def _data_quality_issues_rate(df: pd.DataFrame) -> float:
     return float(issue_mask.mean())
 
 
+def _has_non_null_values(df: pd.DataFrame, column: str) -> bool:
+    return column in df.columns and not df[column].dropna().empty
+
+
+def _drop_empty_columns(
+    reference_df: pd.DataFrame,
+    current_df: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Drop columns that are fully empty in either dataset to avoid Evidently drift errors."""
+    common_cols = [c for c in reference_df.columns if c in current_df.columns]
+    to_drop: list[str] = []
+    for col in common_cols:
+        if reference_df[col].dropna().empty or current_df[col].dropna().empty:
+            to_drop.append(col)
+
+    if to_drop:
+        reference_df = reference_df.drop(columns=to_drop, errors="ignore")
+        current_df = current_df.drop(columns=to_drop, errors="ignore")
+    return reference_df, current_df
+
+
 def run_evidently_reports(
     reference_df: pd.DataFrame,
     current_df: pd.DataFrame,
@@ -145,7 +147,7 @@ def run_evidently_reports(
             json.dump(payload, f, indent=2)
         return summary, payload
 
-    metrics = [DataDriftPreset(), DataQualityPreset()]
+    metrics = [DataDriftPreset(), DataSummaryPreset()]
     current_success_df = current_df.copy()
     if "status" in current_success_df.columns:
         current_success_df = current_success_df[current_success_df["status"] == "ok"]
@@ -166,15 +168,17 @@ def run_evidently_reports(
         enable_label_metrics
         and {"prediction", "target"}.issubset(reference_success_df.columns)
         and {"prediction", "target"}.issubset(current_success_df.columns)
+        and _has_non_null_values(reference_success_df, "target")
+        and _has_non_null_values(current_success_df, "target")
     ):
         metrics.append(ClassificationPreset())
 
-    column_mapping = ColumnMapping(prediction="prediction", target="target")
-    report = Report(metrics=metrics)
-    report.run(reference_data=reference_success_df, current_data=current_success_df, column_mapping=column_mapping)
-    report.save_html(str(output_html))
+    reference_success_df, current_success_df = _drop_empty_columns(reference_success_df, current_success_df)
 
-    report_payload: Dict[str, Any] = report.as_dict()
+    report = Report(metrics=metrics)
+    snapshot = report.run(current_data=current_success_df, reference_data=reference_success_df)
+    snapshot.save_html(str(output_html))
+    report_payload: Dict[str, Any] = snapshot.dict()
     with output_json.open("w", encoding="utf-8") as f:
         json.dump(report_payload, f, indent=2)
 

@@ -95,7 +95,7 @@ def publish_summary(labels: Mapping[str, str], summary: Mapping[str, float]) -> 
     OUTPUT_DRIFT_SCORE.labels(**labels).set(summary.get("output_drift_score", 0.0))
     PRED_POS_RATE.labels(**labels).set(summary.get("prediction_positive_rate", 0.0))
     REF_POS_RATE.labels(**labels).set(summary.get("reference_positive_rate", 0.0))
-    if ENABLE_LABEL_METRICS:
+    if ENABLE_LABEL_METRICS: 
         F1_SCORE.labels(**labels).set(summary.get("model_f1_score", 0.0))
     if ENABLE_DETAILED_METRICS:
         MISSING_IMAGE_FILE_RATE.labels(**labels).set(summary.get("missing_image_file_rate", 0.0))
