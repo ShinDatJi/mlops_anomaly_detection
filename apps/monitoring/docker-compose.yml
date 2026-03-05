@@ -36,6 +36,7 @@ services:
       - ${MONITORING_REPORTS_PATH}:/app/reports/monitoring
       - ${MODELS_PATH}:/app/models:ro
       - ./apps/monitoring/evidently/configs:/app/configs:ro
+      - ./references/monitoring:/app/references/monitoring:ro
     environment:
       - PROM_EXPORT_PORT=9108
       - EVIDENTLY_INTERVAL_SECONDS=${EVIDENTLY_INTERVAL_SECONDS}
