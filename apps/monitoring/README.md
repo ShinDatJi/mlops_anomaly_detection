@@ -39,6 +39,7 @@ docker compose \
 - Reports are written to:
   - `reports/monitoring/evidently/html/latest_report.html`
   - `reports/monitoring/evidently/json/latest_report.json`
+- Runtime summary computation uses a stable pandas-based path by default (no Evidently report API dependency in the hot path).
 - Metrics labels include model metadata fields (`model_name`, `model_version`, `run_id`) for MLflow alignment.
 
 ## Modes

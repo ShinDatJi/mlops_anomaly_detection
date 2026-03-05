@@ -34,6 +34,7 @@ services:
     working_dir: /app
     volumes:
       - ${MONITORING_REPORTS_PATH}:/app/reports/monitoring
+      - ./references/monitoring:/app/references/monitoring:ro
       - ${MODELS_PATH}:/app/models:ro
       - ./apps/monitoring/evidently/configs:/app/configs:ro
       - ./references/monitoring:/app/references/monitoring:ro
