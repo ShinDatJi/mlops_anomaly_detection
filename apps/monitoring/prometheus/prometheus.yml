@@ -15,3 +15,8 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["evidently-monitor:9108"]
+
+  - job_name: node-exporter
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["node-exporter:9100"]

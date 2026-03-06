@@ -10,6 +10,7 @@ Components:
 - Prometheus for metrics collection
 - Grafana for dashboards and alerts
 - Evidently batch job/exporter for data and model monitoring
+- Node Exporter for host infrastructure metrics (CPU, memory, disk)
 - Prediction API `/metrics` + inference events feed this stack
 
 ## Setup
