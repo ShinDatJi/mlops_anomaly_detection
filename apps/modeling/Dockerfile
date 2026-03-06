@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.9.28-python3.12-trixie-slim AS modeling_base
+FROM ghcr.io/astral-sh/uv:0.9.28-python3.12-trixie-slim
 
 ENV UV_NO_DEV=1
 ENV UV_COMPILE_BYTECODE=1
@@ -22,18 +22,3 @@ COPY src src
 # Sync project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
-
-FROM modeling_base AS modeling_setup
-CMD ["/app/.venv/bin/load_initial_models"]
-
-FROM modeling_base AS modeling_loading
-CMD ["/app/.venv/bin/load_raw_data"]
-
-FROM modeling_base AS modeling_preprocessing
-CMD ["/app/.venv/bin/preprocess_data"]
-
-FROM modeling_base AS modeling_training
-CMD ["/app/.venv/bin/train_model"]
-
-FROM modeling_base AS modeling_evaluation
-CMD ["/app/.venv/bin/evaluate_model"]

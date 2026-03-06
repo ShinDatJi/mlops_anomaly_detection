@@ -1,15 +1,24 @@
-x-environment: &default-environment
-  CATEGORY: ${CATEGORY}
-  DATA_CLEAN_DB: ${DATA_CLEAN_DB}
-  DATA_TRAIN_DB: ${DATA_TRAIN_DB}
-  DATA_TEST_DB: ${DATA_TEST_DB}
-  DATA_TRAIN_DIR: ${DATA_TRAIN_DIR}
-  DATA_TEST_DIR: ${DATA_TEST_DIR}
-  DATA_TEST_PATCHING_DIR: ${DATA_TEST_PATCHING_DIR}
-  REPORTS_CONFIG: ${REPORTS_CONFIG}
-  REPORTS_REPORT: ${REPORTS_REPORT}
-  REPORTS_MODEL: ${REPORTS_MODEL}
-  MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+x-modeling-common: &modeling-common
+  working_dir: /app
+  image: anomaly-detection/modeling:latest
+  environment: &common-environment
+    CATEGORY: ${CATEGORY}
+    DATA_CLEAN_DB: ${DATA_CLEAN_DB}
+    DATA_TRAIN_DB: ${DATA_TRAIN_DB}
+    DATA_TEST_DB: ${DATA_TEST_DB}
+    DATA_TRAIN_DIR: ${DATA_TRAIN_DIR}
+    DATA_TEST_DIR: ${DATA_TEST_DIR}
+    DATA_TEST_PATCHING_DIR: ${DATA_TEST_PATCHING_DIR}
+    REPORTS_CONFIG: ${REPORTS_CONFIG}
+    REPORTS_REPORT: ${REPORTS_REPORT}
+    REPORTS_MODEL: ${REPORTS_MODEL}
+    MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+  networks:
+    - mlflow
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    init-modeling:
+      condition: service_completed_successfully
 
 x-flags: &default-flags
   PYTHONUNBUFFERED: 1
@@ -17,12 +26,17 @@ x-flags: &default-flags
   GIT_PYTHON_REFRESH: silent
 
 services:
-  modeling-setup:
-    container_name: modeling-setup
-    working_dir: /app
+  init-modeling:
+    image: anomaly-detection/modeling:latest
     build:
       context: ./apps/modeling/
-      target: modeling_setup
+    volumes:
+      - raw-data:/data
+    command: chown -R ${AIRFLOW_UID:-50000}:0 /data
+
+  load-initial-models:
+    <<: [*modeling-common]
+    command: .venv/bin/load_initial_models
     volumes:
       - ${MODELS_PATH}:/app/models:ro
     environment:
@@ -35,24 +49,15 @@ services:
     networks:
       - mlflow
 
-  modeling-loading:
-    container_name: modeling-loading-${CATEGORY}
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_loading
+  load-raw-data:
+    <<: [*modeling-common]
+    command: .venv/bin/load_raw_data
     volumes:
-      - ${CONFIG_FILE}:/app/config.json:ro
-      - raw_data:/app/${S3_DATA_RAW_PATH}:rw
+      - raw-data:/app/${S3_DATA_RAW_PATH}:rw
       - ${DATA_PATH}:/app/data/processed:rw
-      - ${REPORTS_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
-      CONFIG_FILE: config.json
-      CONFIG_FROM_MODEL_REGISTRY: ${CONFIG_FROM_MODEL_REGISTRY}
-      CONFIG_FROM_MODEL_REGISTRY_ALIAS: ${CONFIG_FROM_MODEL_REGISTRY_ALIAS}
+      <<: [*common-environment, *default-flags]
       DATA_PATH: ./data/processed
-      REPORTS_PATH: ./reports
       S3_ENDPOINT: ${S3_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -60,36 +65,39 @@ services:
       S3_CLEAN_DB_FILE: ${S3_CLEAN_DB_FILE}
     networks:
       - minio
-      - mlflow
 
-  modeling-preprocessing:
-    container_name: modeling-preprocessing-${CATEGORY}
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_preprocessing
+  load-config:
+    <<: [*modeling-common]
+    command: .venv/bin/load_config
+    volumes:
+      - ${CONFIG_FILE}:/app/config.json:rw
+      - ${REPORTS_PATH}:/app/reports:rw
+    environment:
+      <<: [*common-environment, *default-flags]
+      CONFIG_FILE: config.json
+      CONFIG_FROM_MODEL_REGISTRY: ${CONFIG_FROM_MODEL_REGISTRY}
+      CONFIG_FROM_MODEL_REGISTRY_ALIAS: ${CONFIG_FROM_MODEL_REGISTRY_ALIAS}
+      REPORTS_PATH: ./reports
+
+  preprocess-data:
+    <<: [*modeling-common]
+    command: .venv/bin/preprocess_data
     configs:
       - source: config
         target: /app/config.json
     volumes:
-      # - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - raw_data:/app/${S3_DATA_RAW_PATH}:ro
+      - raw-data:/app/${S3_DATA_RAW_PATH}:ro
       - ${DATA_PATH}:/app/data/processed:rw
       - ${REPORTS_PREPROCESSING_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
       DATA_PATH: ./data/processed
       REPORTS_PREPROCESSING_PATH: ./reports
-    networks:
-      - mlflow
 
-  modeling-training:
-    container_name: modeling-training-${CATEGORY}
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_training
+  train-model:
+    <<: [*modeling-common]
+    command: .venv/bin/train_model
     configs:
       - source: config
         target: /app/config.json
@@ -98,37 +106,30 @@ services:
       - ${REPORTS_PREPROCESSING_PATH}:/app/reports_preprocessing:ro
       - ${REPORTS_TRAINING_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
       DATA_PATH: ./data/processed
       REPORTS_PREPROCESSING_PATH: ./reports_preprocessing
       REPORTS_TRAINING_PATH: ./reports
       MAX_EPOCHS: ${MAX_EPOCHS}
-    networks:
-      - mlflow
 
-  modeling-evaluation:
-    container_name: modeling-evaluation-${CATEGORY}
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_evaluation
+  evaluate-model:
+    <<: [*modeling-common]
+    command: .venv/bin/evaluate_model
     configs:
       - source: config
         target: /app/config.json
     volumes:
-      - raw_data:/app/${S3_DATA_RAW_PATH}:ro
+      - raw-data:/app/${S3_DATA_RAW_PATH}:ro
       - ${DATA_PATH}:/app/data/processed:ro
       - ${REPORTS_TRAINING_PATH}:/app/reports_training:ro
       - ${REPORTS_EVALUATION_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
       DATA_PATH: ./data/processed
       REPORTS_TRAINING_PATH: ./reports_training
       REPORTS_EVALUATION_PATH: ./reports
-    networks:
-      - mlflow
 
 configs:
   config:
@@ -141,4 +142,5 @@ networks:
     external: true
 
 volumes:
-  raw_data:
+  raw-data:
+    name: raw-data-${CATEGORY}

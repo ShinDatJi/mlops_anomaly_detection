@@ -1,10 +1,7 @@
-init:
-	cp default.env .env
-
 # minio
 MINIO_CMD = docker compose -f apps/minio/docker-compose.yml
 init-minio:
-	cp apps/minio/default.env apps/minio/.env
+	cp -i apps/minio/default.env apps/minio/.env
 build-minio:
 	$(MINIO_CMD) build
 start-minio:
@@ -15,7 +12,7 @@ stop-minio:
 # mlflow
 MLFLOW_CMD = docker compose -f apps/mlflow/docker-compose.yml
 init-mlflow:
-	cp apps/mlflow/default.env apps/mlflow/.env
+	cp -i apps/mlflow/default.env apps/mlflow/.env
 build-mlflow:
 	$(MLFLOW_CMD) build
 start-mlflow:
@@ -23,67 +20,83 @@ start-mlflow:
 stop-mlflow:
 	$(MLFLOW_CMD) down
 
+# airflow
+AIRFLOW_CMD = docker compose -f apps/airflow/docker-compose.yml --env-file apps/airflow/.env --project-directory ./
+init-airflow:
+	cp -i apps/airflow/default.env apps/airflow/.env
+build-airflow:
+	$(AIRFLOW_CMD) build
+start-airflow:
+	$(AIRFLOW_CMD) up -d --wait
+stop-airflow:
+	$(AIRFLOW_CMD) down
+
 # data
-DATA_CMD = docker compose -f apps/data/docker-compose.yml --env-file .env --env-file apps/data/.env --project-directory ./
+DATA_CMD = docker compose -f apps/data/docker-compose.yml --env-file apps/data/.env --project-directory ./
 init-data:
-	cp apps/data/default.env apps/data/.env
+	cp -i apps/data/default.env apps/data/.env
 build-data:
-	$(DATA_CMD) build data
-dev-data:
-	$(DATA_CMD) run --build data
-connect-data:
-	$(DATA_CMD) run --build data bash
-run-data:
-	$(DATA_CMD) run --rm data
+	$(DATA_CMD) build
+dev-data-ingest-data:
+	$(DATA_CMD) run --build ingest-data
+connect-data-ingest-data:
+	$(DATA_CMD) run --build ingest-data bash
+run-data-ingest-data:
+	$(DATA_CMD) run --rm ingest-data
 
 # modeling
-MODELING_CMD = docker compose -f apps/modeling/docker-compose.yml --env-file .env --env-file apps/modeling/.env --project-directory ./
+MODELING_CMD = docker compose -f apps/modeling/docker-compose.yml --env-file apps/modeling/.env --project-directory ./
 init-modeling:
-	cp apps/modeling/default.env apps/modeling/.env
+	cp -i apps/modeling/default.env apps/modeling/.env
 build-modeling:
 	$(MODELING_CMD) build
-dev-modeling-loading:
-	$(MODELING_CMD) run --build modeling-loading
-dev-modeling-preprocessing:
-	$(MODELING_CMD) run --build modeling-preprocessing
-dev-modeling-training:
-	$(MODELING_CMD) run --build modeling-training
-dev-modeling-evaluation:
-	$(MODELING_CMD) run --build modeling-evaluation
-dev-modeling-setup:
-	$(MODELING_CMD) run --build modeling-setup
-connect-modeling-loading:
-	$(MODELING_CMD) run --build modeling-loading bash
-connect-modeling-preprocessing:
-	$(MODELING_CMD) run --build modeling-preprocessing bash
-connect-modeling-training:
-	$(MODELING_CMD) run --build modeling-training bash
-connect-modeling-evaluation:
-	$(MODELING_CMD) run --build modeling-evaluation bash
-connect-modeling-setup:
-	$(MODELING_CMD) run --build modeling-setup bash
-run-modeling-loading:
-	$(MODELING_CMD) run --rm modeling-loading
-run-modeling-preprocessing:
-	$(MODELING_CMD) run --rm modeling-preprocessing
-run-modeling-training:
-	$(MODELING_CMD) run --rm modeling-training
-run-modeling-evaluation:
-	$(MODELING_CMD) run --rm modeling-evaluation
-run-modeling-setup:
-	$(MODELING_CMD) run --rm modeling-setup
-setup-modeling:
-	run-modeling-setup
+dev-modeling-load-initial-models:
+	$(MODELING_CMD) run --build load-initial-models
+dev-modeling-load-raw-data:
+	$(MODELING_CMD) run --build load-raw-data
+dev-modeling-load-config:
+	$(MODELING_CMD) run --build load-config
+dev-modeling-preprocess-data:
+	$(MODELING_CMD) run --build preprocess-data
+dev-modeling-train-model:
+	$(MODELING_CMD) run --build train-model
+dev-modeling-evaluate-model:
+	$(MODELING_CMD) run --build evaluate-model
+connect-modeling-load-initial-models:
+	$(MODELING_CMD) run --build load-initial-models bash
+connect-modeling-load-raw-data:
+	$(MODELING_CMD) run --build load-raw-data bash
+connect-modeling-load-config:
+	$(MODELING_CMD) run --build load-config bash
+connect-modeling-preprocess-data:
+	$(MODELING_CMD) run --build preprocess-data bash
+connect-modeling-train-model:
+	$(MODELING_CMD) run --build train-model bash
+connect-modeling-evaluate-model:
+	$(MODELING_CMD) run --build evaluate-model bash
+run-modeling-load-initial-models:
+	$(MODELING_CMD) run --rm load-initial-models
+run-modeling-load-raw-data:
+	$(MODELING_CMD) run --rm load-raw-data
+run-modeling-load-config:
+	$(MODELING_CMD) run --rm load-config
+run-modeling-preprocess-data:
+	$(MODELING_CMD) run --rm preprocess-data
+run-modeling-train-model:
+	$(MODELING_CMD) run --rm train-model
+run-modeling-evaluate-model:
+	$(MODELING_CMD) run --rm evaluate-model
 run-modeling:
-	run-modeling-loading
-	run-modeling-preprocessing
-	run-modeling-training
-	run-modeling-evaluation
+	run-modeling-load-raw-data
+	run-modeling-load-config
+	run-modeling-preprocess-data
+	run-modeling-train-model
+	run-modeling-evaluate-model
 
 # prediction
-PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./
+PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file apps/prediction/.env --project-directory ./
 init-prediction:
-	cp apps/prediction/default.env apps/prediction/.env
+	cp -i apps/prediction/default.env apps/prediction/.env
 build-prediction:
 	$(PREDICTION_CMD) build prediction
 dev-prediction:
@@ -97,25 +110,26 @@ stop-prediction:
 
 #all
 init-all:
-	init
 	init-minio
 	init-mlflow
+	init-airflow
 	init-data
 	init-modeling
 	init-prediction
 build-all:
 	build-minio
 	build-mlflow
+	build-airflow
 	build-data
 	build-modeling
 	build-prediction
 start-all:
 	start-minio
 	start-mlflow
+	start-airflow
 	start-prediction
-setup-all:
-	setup-modeling
 stop-all:
 	stop-minio
 	stop-mlflow
+	stop-airflow
 	stop-prediction

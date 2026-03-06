@@ -11,7 +11,7 @@ windows:
     uv run pymake COMMAND
 make init-APP
 change apps/APP/.env if necessary
-change .env to select category
+export category=CATEGORY
 make build-APP
 make run-APP
 make dev-APP => keep container, build
@@ -19,19 +19,13 @@ make connect-APP => keep container, build, open shell in container
 make clean-APP => remove containers
 
 some todos:
-logs
-nginx
+nginx?
 unit tests => simple
-api training
-dvc => Airflow
-minio => mlflow => local server
-training => dvc/mlflow
-prediction => docker compose
 
 must have:
-versioning
-automation
-model registry
-retraining strategy
+versioning => partially done
+automation => done
+model registry => done
+retraining strategy => partially done
 deployment strategy
 monitoring

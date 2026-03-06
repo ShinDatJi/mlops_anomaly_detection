@@ -1,9 +1,10 @@
 services:
-  data:
-    container_name: data-${CATEGORY}
+  ingest-data:
     working_dir: /app
+    image: anomaly-detection/data:latest
     build:
       context: ./apps/data/
+    command: .venv/bin/ingest_data
     volumes:
       - ${DATA_RAW_PATH}:/app/${S3_DATA_RAW_PATH}:ro
       - ${REPORTS_PATH}:/app/reports:rw

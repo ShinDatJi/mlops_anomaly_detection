@@ -22,5 +22,3 @@ COPY src src
 # Sync project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
-
-CMD ["/app/.venv/bin/ingest_data"]
