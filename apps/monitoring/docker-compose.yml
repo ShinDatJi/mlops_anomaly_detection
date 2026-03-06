@@ -37,7 +37,6 @@ services:
       - ./references/monitoring:/app/references/monitoring:ro
       - ${MODELS_PATH}:/app/models:ro
       - ./apps/monitoring/evidently/configs:/app/configs:ro
-      - ./references/monitoring:/app/references/monitoring:ro
     environment:
       - PROM_EXPORT_PORT=9108
       - EVIDENTLY_INTERVAL_SECONDS=${EVIDENTLY_INTERVAL_SECONDS}
@@ -52,6 +51,19 @@ services:
       - MLFLOW_MODEL_VERSION=${MLFLOW_MODEL_VERSION}
       - MLFLOW_RUN_ID=${MLFLOW_RUN_ID}
     command: ["python", "-m", "src.run_monitoring"]
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: monitoring-node-exporter
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/.+)($|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
 
 networks:
   default:
