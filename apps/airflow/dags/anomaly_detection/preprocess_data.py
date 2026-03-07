@@ -1,9 +1,11 @@
+from numpy.version import version
+
 from airflow.utils.dates import days_ago
 from airflow.decorators import dag, task
 from airflow.models import Param, Variable
 from airflow.operators.python import get_current_context
 from anomaly_detection.tools.config_tools import load_default_config, load_config, save_config
-from anomaly_detection.tools.config_tools import get_params_from_config, get_config_from_params
+from anomaly_detection.tools.config_tools import get_preparation_and_preprocessing_params, update_config_with_preparation_and_preprocessing_params
 from anomaly_detection.tasks.modeling import preprocess_data_task
 
 categories = Variable.get(key="categories", default_var=[], deserialize_json=True)
@@ -16,19 +18,16 @@ def update_config_task():
     params = get_current_context()["params"]
     if params["override_config_params"]:
         category = params["category"]
-        config = load_config(category)
-        config.update({
-            "preparation": get_config_from_params(params["preparation"]),
-            "preprocessing": get_config_from_params(params["preprocessing"])
-        })
-        save_config(category, config)
+        version = params["version"]
+        config = load_config(category, version)
+        update_config_with_preparation_and_preprocessing_params(config, params)
+        save_config(category, version, config)
 
-def create_preprocess_data_dag(category):
-    preparation_params = get_params_from_config(default_config["preparation"])
-    preprocessing_params = get_params_from_config(default_config["preprocessing"])
+def create_preprocess_data_dag(category, version):
+    params = get_preparation_and_preprocessing_params(default_config)
     @dag(
-        dag_id=f'preprocess-data_{category}',
-        tags=['modeling', f"cat_{category}"],
+        dag_id=f'preprocess-data_{category}_{version}',
+        tags=['modeling', f"cat_{category}_{version}"],
         default_args={
             'owner': 'airflow',
             'start_date': days_ago(0, minute=1),
@@ -36,16 +35,17 @@ def create_preprocess_data_dag(category):
         catchup=False,
         params={
             "category": Param(category, const=category, type="string"),
+            "version": Param(version, const=version, type="string"),
             "override_config_params": Param(False, type="boolean"),
-            "preparation": Param(preparation_params, type="object", section="Preparation"),
-            "preprocessing": Param(preprocessing_params, type="object", section="Preprocessing"),
+            **params
         }
     )
     def preprocess_data_dag():
-        update_config_task()
-        preprocess_data_task()
+        update_config_task() >> preprocess_data_task()
     
     return preprocess_data_dag()
 
 for cat in categories:
-    globals()[f"preprocess_data_{cat}"] = create_preprocess_data_dag(cat)
+    name = cat["name"]
+    for ver in cat["versions"]:
+        globals()[f"preprocess_data_{name}_{ver}"] = create_preprocess_data_dag(name, ver)

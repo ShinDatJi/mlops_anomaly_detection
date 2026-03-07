@@ -10,6 +10,7 @@ import modeling.tools as tools
 
 def main():
     category = os.environ["CATEGORY"]
+    version = os.environ["VERSION"]
     config_file = os.environ["CONFIG_FILE"]
     data_path = os.environ["DATA_PATH"]
     test_db_file = os.path.join(data_path, os.environ["DATA_TEST_DB"])
@@ -89,8 +90,8 @@ def main():
     metrics = tools.extract_evaluation_metrics_from_report(report)
 
     mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
-    mlflow.set_experiment(f"evaluation-{category}")
-    mlflow.set_experiment_tags({"stage": "evaluation", "dataset": category})
+    mlflow.set_experiment(f"evaluation-{category}_{version}")
+    mlflow.set_experiment_tags({"stage": "evaluation", "dataset": category, "version": version})
 
     with mlflow.start_run():
         mlflow.log_params(params)
@@ -101,7 +102,7 @@ def main():
         mlflow.log_artifact(os.path.join(reports_path, "test"))
         mlflow.log_artifact(os.path.join(reports_path, "test_patching"))
 
-        mlflow.keras.log_model(best_model, name="model", save_exported_model=False, registered_model_name=f"{category}")
+        mlflow.keras.log_model(best_model, name="model", save_exported_model=False, registered_model_name=f"{category}_{version}")
 
 if __name__ == "__main__":
     main()

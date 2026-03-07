@@ -3,10 +3,11 @@ from mlflow import MlflowClient
 import json
 
 def main():
-    category = os.environ["CATEGORY"]
     config_file = os.environ["CONFIG_FILE"]
     config_from_model_registry = os.environ["CONFIG_FROM_MODEL_REGISTRY"] == "1"
-    config_from_model_registry_alias = os.environ["CONFIG_FROM_MODEL_REGISTRY_ALIAS"]
+    category = os.environ["CONFIG_FROM_MODEL_REGISTRY_CATEGORY"]
+    version = os.environ["CONFIG_FROM_MODEL_REGISTRY_VERSION"]
+    alias = os.environ["CONFIG_FROM_MODEL_REGISTRY_ALIAS"]
     reports_path = os.environ["REPORTS_PATH"]
     reports_config = os.environ["REPORTS_CONFIG"]
     tracking_uri = os.environ["MLFLOW_TRACKING_URI"]
@@ -14,9 +15,10 @@ def main():
     os.makedirs(reports_path, exist_ok=True)
 
     if config_from_model_registry:
-        print(f"Load config from model registry: {category} @ {config_from_model_registry_alias}")
+        model_name = f"{category}_{version}"
+        print(f"Load config from model registry: {model_name} @ {alias}")
         client = MlflowClient(tracking_uri)
-        model_version = client.get_model_version_by_alias(category, config_from_model_registry_alias)
+        model_version = client.get_model_version_by_alias(model_name, alias)
         run_id = model_version.run_id
         client.download_artifacts(run_id, reports_config, reports_path)
     else:

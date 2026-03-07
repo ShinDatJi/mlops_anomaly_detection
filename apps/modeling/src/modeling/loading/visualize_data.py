@@ -140,9 +140,6 @@ def plot_stat_images(df, reports_path):
     plt.close()
 
 def visualize_data(df, reports_path):
-    print(reports_path)
-    print(df.head())
-
     plot_anomaly_coverage(df, reports_path)
     plot_hsv_distribution(df, reports_path)
     plot_stat_images(df, reports_path)

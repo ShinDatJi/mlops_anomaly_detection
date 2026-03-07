@@ -8,7 +8,11 @@ base_command = f"docker compose -f {data_path}/docker-compose.yml --env-file {da
 
 @task.bash(
     task_id="ingest-data",
-    env={"CATEGORY": "{{ params.category }}"},
+    env={
+        "CATEGORY": "{{ params.category }}",
+        "VERSION": "{{ params.version }}",
+        "DATA_RAW_PATH": "{{ params.data_raw_path }}"
+    },
     cwd=project_root
 )
 def ingest_data_task():

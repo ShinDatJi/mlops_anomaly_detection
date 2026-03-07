@@ -23,9 +23,11 @@ nginx?
 unit tests => simple
 
 must have:
-versioning => partially done
+versioning => done
 automation => done
 model registry => done
-retraining strategy => partially done
-deployment strategy
+retraining strategy => done
+deployment strategy => partially
 monitoring
+
+clean docker desktop disk space => Optimize-VHD -Path "C:\Users\<YOU>\AppData\Local\Docker\wsl\data\ext4.vhdx" -Mode Full

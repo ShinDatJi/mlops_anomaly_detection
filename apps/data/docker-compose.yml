@@ -7,25 +7,18 @@ services:
     command: .venv/bin/ingest_data
     volumes:
       - ${DATA_RAW_PATH}:/app/${S3_DATA_RAW_PATH}:ro
-      - ${REPORTS_PATH}:/app/reports:rw
     environment:
-      CATEGORY: ${CATEGORY}
       DATA_RAW_PATH: ${S3_DATA_RAW_PATH}
-      REPORTS_PATH: ./reports
       S3_ENDPOINT: ${S3_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       S3_BUCKET: ${S3_BUCKET}
-      S3_CLEAN_DB_FILE: ${S3_CLEAN_DB_FILE}
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      S3_DATA_FILE: ${S3_DATA_FILE}
       PYTHONUNBUFFERED: 1
       GIT_PYTHON_REFRESH: silent
     networks:
       - minio
-      - mlflow
 
 networks:
   minio:
-    external: true
-  mlflow:
     external: true

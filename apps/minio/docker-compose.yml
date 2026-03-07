@@ -16,21 +16,6 @@ services:
       timeout: 3s
       retries: 20
 
-  create-bucket:
-    image: minio/mc:latest
-    container_name: minio-create-bucket
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        mc alias set myminio "http://${MINIO_HOST}:${MINIO_PORT}" \
-          "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
-        mc mb --ignore-existing "myminio/${MINIO_BUCKET}"
-    restart: "no"
-
 networks:
   default:
     name: minio

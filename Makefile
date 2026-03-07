@@ -2,8 +2,6 @@
 MINIO_CMD = docker compose -f apps/minio/docker-compose.yml
 init-minio:
 	cp -i apps/minio/default.env apps/minio/.env
-build-minio:
-	$(MINIO_CMD) build
 start-minio:
 	$(MINIO_CMD) up -d
 stop-minio:
@@ -13,8 +11,6 @@ stop-minio:
 MLFLOW_CMD = docker compose -f apps/mlflow/docker-compose.yml
 init-mlflow:
 	cp -i apps/mlflow/default.env apps/mlflow/.env
-build-mlflow:
-	$(MLFLOW_CMD) build
 start-mlflow:
 	$(MLFLOW_CMD) up -d --wait
 stop-mlflow:
@@ -87,11 +83,11 @@ run-modeling-train-model:
 run-modeling-evaluate-model:
 	$(MODELING_CMD) run --rm evaluate-model
 run-modeling:
-	run-modeling-load-raw-data
-	run-modeling-load-config
-	run-modeling-preprocess-data
-	run-modeling-train-model
-	run-modeling-evaluate-model
+	$(MAKE) run-modeling-load-raw-data
+	$(MAKE) run-modeling-load-config
+	$(MAKE) run-modeling-preprocess-data
+	$(MAKE) run-modeling-train-model
+	$(MAKE) run-modeling-evaluate-model
 
 # prediction
 PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file apps/prediction/.env --project-directory ./
@@ -110,26 +106,24 @@ stop-prediction:
 
 #all
 init-all:
-	init-minio
-	init-mlflow
-	init-airflow
-	init-data
-	init-modeling
-	init-prediction
+	$(MAKE) init-minio
+	$(MAKE) init-mlflow
+	$(MAKE) init-airflow
+	$(MAKE) init-data
+	$(MAKE) init-modeling
+	$(MAKE) init-prediction
 build-all:
-	build-minio
-	build-mlflow
-	build-airflow
-	build-data
-	build-modeling
-	build-prediction
+	$(MAKE) build-airflow
+	$(MAKE) build-data
+	$(MAKE) build-modeling
+	$(MAKE) build-prediction
 start-all:
-	start-minio
-	start-mlflow
-	start-airflow
-	start-prediction
+	$(MAKE) start-minio
+	$(MAKE) start-mlflow
+	$(MAKE) start-airflow
+	$(MAKE) start-prediction
 stop-all:
-	stop-minio
-	stop-mlflow
-	stop-airflow
-	stop-prediction
+	$(MAKE) stop-minio
+	$(MAKE) stop-mlflow
+	$(MAKE) stop-airflow
+	$(MAKE) stop-prediction

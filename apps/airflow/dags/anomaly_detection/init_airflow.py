@@ -1,15 +1,14 @@
 from airflow.utils.dates import days_ago
 from airflow.decorators import dag, task
-from anomaly_detection.tools.categories import get_categories
+from anomaly_detection.tools.default_data import get_default_categories
 from airflow.models import Variable
 
 @task
 def init_categories_task():
-    default_categories = get_categories()
+    default_categories = get_default_categories()
     categories = Variable.get(key="categories", default_var=default_categories, deserialize_json=True)
     print(categories)
     Variable.set(key="categories", value=categories, serialize_json=True)
-    return "Airflow initialized with categories: " + Variable.get("categories")
 
 @dag(
     dag_id='init-airflow',

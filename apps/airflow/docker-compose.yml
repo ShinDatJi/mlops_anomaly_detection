@@ -75,7 +75,7 @@ x-airflow-common:
     PROJECT_ROOT: ${PROJECT_ROOT}
     DATA_PROJECT_PATH: ${DATA_PROJECT_PATH}
     MODELING_PROJECT_PATH: ${MODELING_PROJECT_PATH}
-    DEFAULT_CONFIG_FILE: ${PROJECT_ROOT}/${DEFAULT_CONFIG_FILE}
+    DEFAULT_CONFIG_FILE: /opt/airflow/default.config.json
     REPORTS_MODELING_PATH: /opt/airflow/reports/modeling
     REPORTS_CONFIG: ${REPORTS_CONFIG}
   volumes:
@@ -87,7 +87,7 @@ x-airflow-common:
     - ${DATA_PROJECT_PATH}/.env:${PROJECT_ROOT}/${DATA_PROJECT_PATH}/.env:ro
     - ${MODELING_PROJECT_PATH}/docker-compose.yml:${PROJECT_ROOT}/${MODELING_PROJECT_PATH}/docker-compose.yml:ro
     - ${MODELING_PROJECT_PATH}/.env:${PROJECT_ROOT}/${MODELING_PROJECT_PATH}/.env:ro
-    - ${DEFAULT_CONFIG_FILE}:${PROJECT_ROOT}/${DEFAULT_CONFIG_FILE}:ro
+    - ${DEFAULT_CONFIG_FILE}:/opt/airflow/default.config.json:ro
     - ${REPORTS_MODELING_PATH}:/opt/airflow/reports/modeling:rw
     - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
