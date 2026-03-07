@@ -31,3 +31,5 @@ deployment strategy => partially
 monitoring
 
 clean docker desktop disk space => Optimize-VHD -Path "C:\Users\<YOU>\AppData\Local\Docker\wsl\data\ext4.vhdx" -Mode Full
+
+cd /c/Users/shinm/datascientest/mlops_anomaly_detection && if command -v tree >/dev/null 2>&1; then tree -a -I '__pycache__|*.pyc|.git|.venv|venv|node_modules|logs' -L 4; else find . -maxdepth 4 \( -path './.git' -o -path './.venv' -o -path './venv' -o -path './node_modules' -o -path './__pycache__' -o -path './apps/airflow/logs' \) -prune -o -print | sed 's#^\./##' | sort; fi

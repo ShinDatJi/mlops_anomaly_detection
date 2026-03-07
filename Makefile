@@ -1,5 +1,8 @@
+init:
+	cp -i default.env .env
+
 # minio
-MINIO_CMD = docker compose -f apps/minio/docker-compose.yml
+MINIO_CMD = docker compose -f apps/minio/docker-compose.yml --env-file .env --env-file apps/minio/.env --project-directory ./
 init-minio:
 	cp -i apps/minio/default.env apps/minio/.env
 start-minio:
@@ -8,16 +11,18 @@ stop-minio:
 	$(MINIO_CMD) down
 
 # mlflow
-MLFLOW_CMD = docker compose -f apps/mlflow/docker-compose.yml
+MLFLOW_CMD = docker compose -f apps/mlflow/docker-compose.yml --env-file .env --env-file apps/mlflow/.env --project-directory ./
 init-mlflow:
 	cp -i apps/mlflow/default.env apps/mlflow/.env
+build-mlflow:
+	$(MLFLOW_CMD) build
 start-mlflow:
 	$(MLFLOW_CMD) up -d --wait
 stop-mlflow:
 	$(MLFLOW_CMD) down
 
 # airflow
-AIRFLOW_CMD = docker compose -f apps/airflow/docker-compose.yml --env-file apps/airflow/.env --project-directory ./
+AIRFLOW_CMD = docker compose -f apps/airflow/docker-compose.yml --env-file .env --env-file apps/airflow/.env --project-directory ./
 init-airflow:
 	cp -i apps/airflow/default.env apps/airflow/.env
 build-airflow:
@@ -28,7 +33,7 @@ stop-airflow:
 	$(AIRFLOW_CMD) down
 
 # data
-DATA_CMD = docker compose -f apps/data/docker-compose.yml --env-file apps/data/.env --project-directory ./
+DATA_CMD = docker compose -f apps/data/docker-compose.yml --env-file .env --env-file apps/data/.env --project-directory ./
 init-data:
 	cp -i apps/data/default.env apps/data/.env
 build-data:
@@ -41,7 +46,7 @@ run-data-ingest-data:
 	$(DATA_CMD) run --rm ingest-data
 
 # modeling
-MODELING_CMD = docker compose -f apps/modeling/docker-compose.yml --env-file apps/modeling/.env --project-directory ./
+MODELING_CMD = docker compose -f apps/modeling/docker-compose.yml --env-file .env --env-file apps/modeling/.env --project-directory ./
 init-modeling:
 	cp -i apps/modeling/default.env apps/modeling/.env
 build-modeling:
@@ -90,7 +95,7 @@ run-modeling:
 	$(MAKE) run-modeling-evaluate-model
 
 # prediction
-PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file apps/prediction/.env --project-directory ./
+PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./
 init-prediction:
 	cp -i apps/prediction/default.env apps/prediction/.env
 build-prediction:
@@ -106,6 +111,7 @@ stop-prediction:
 
 #all
 init-all:
+	$(MAKE) init
 	$(MAKE) init-minio
 	$(MAKE) init-mlflow
 	$(MAKE) init-airflow
@@ -113,6 +119,7 @@ init-all:
 	$(MAKE) init-modeling
 	$(MAKE) init-prediction
 build-all:
+	$(MAKE) build-mlflow
 	$(MAKE) build-airflow
 	$(MAKE) build-data
 	$(MAKE) build-modeling

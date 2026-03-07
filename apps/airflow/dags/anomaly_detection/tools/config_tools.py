@@ -2,9 +2,9 @@ import os
 import json
 from airflow.models import Param
 
-default_config_file = os.environ["DEFAULT_CONFIG_FILE"]
-reports_path = os.environ["REPORTS_MODELING_PATH"]
-reports_config = os.environ["REPORTS_CONFIG"]
+default_config_file = os.environ["MODELING_DEFAULT_CONFIG_FILE"]
+config_path = os.environ["MODELING_CONFIG_PATH"]
+config_name = os.environ["MODELING_CONFIG"]
 
 def load_default_config():
     with open(default_config_file, "r") as f:
@@ -12,13 +12,13 @@ def load_default_config():
     return config
 
 def load_config(category, version):
-    config_file = os.path.join(reports_path, f"{category}_{version}", reports_config)
+    config_file = os.path.join(config_path, f"{category}_{version}", config_name)
     with open(config_file, "r") as f:
         config = json.load(f)
     return config
 
 def save_config(category, version, config):
-    config_file = os.path.join(reports_path, f"{category}_{version}", reports_config)
+    config_file = os.path.join(config_path, f"{category}_{version}", config_name)
     with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
 

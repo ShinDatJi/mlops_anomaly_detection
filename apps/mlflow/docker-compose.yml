@@ -45,7 +45,9 @@ services:
     restart: "no"
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v3.9.0
+    image: anomaly-detection/mlflow:latest
+    build:
+      context: ./apps/mlflow/
     container_name: mlflow-server
     depends_on:
       postgres:
@@ -71,13 +73,14 @@ services:
       MLFLOW_PORT: ${MLFLOW_PORT}
 
       MLFLOW_SERVER_ALLOWED_HOSTS: ${MLFLOW_SERVER_ALLOWED_HOSTS}
+      MLFLOW_FLASK_SERVER_SECRET_KEY: ${MLFLOW_FLASK_SERVER_SECRET_KEY}
 
     command:
       - /bin/bash
       - -c
       - |
-        pip install --no-cache-dir psycopg2-binary boto3
         mlflow server \
+          --app-name basic-auth \
           --backend-store-uri "${MLFLOW_BACKEND_STORE_URI}" \
           --artifacts-destination "${MLFLOW_ARTIFACTS_DESTINATION}" \
           --serve-artifacts \
@@ -96,6 +99,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
+
+  mlflow-add-users:
+    image: anomaly-detection/mlflow:latest
+    container_name: mlflow-add-users
+    command: python add_users.py
+    volumes:
+      - ./apps/mlflow/add_users.py:/add_users.py:ro
+    environment:
+      MLFLOW_TRACKING_USERNAME: admin
+      MLFLOW_TRACKING_PASSWORD: password1234
+      MLFLOW_PORT: ${MLFLOW_PORT}
+      MLFLOW_ADMIN_USER: ${MLFLOW_ADMIN_USER}
+      MLFLOW_ADMIN_PASSWORD: ${MLFLOW_ADMIN_PASSWORD}
+    depends_on:
+      mlflow:
+        condition: service_healthy
 
 networks:
   default:
