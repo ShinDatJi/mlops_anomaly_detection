@@ -100,6 +100,8 @@ init-prediction:
 	cp -i apps/prediction/default.env apps/prediction/.env
 build-prediction:
 	$(PREDICTION_CMD) build
+dev-prediction:
+	$(PREDICTION_CMD) up --build
 start-prediction:
 	$(PREDICTION_CMD) up -d --wait
 stop-prediction:
@@ -148,5 +150,3 @@ stop-all:
 
 start-demo:
 	uv run --env-file .env --project ./demo/ streamlit run demo/src/app.py
-start-api:
-	uv run --env-file .env --project ./api uvicorn --app-dir ./api/ main:app --host 0.0.0.0 --port 8000

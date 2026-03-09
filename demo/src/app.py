@@ -1,10 +1,5 @@
-import streamlit as st
-# import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns   
-import os
+import streamlit as st 
 import prediction as prediction
-# import prediction
 
 st.set_page_config(layout="wide")
 st.title("MVTec Anomaly Detection - MLOps")

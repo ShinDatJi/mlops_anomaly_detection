@@ -9,29 +9,20 @@ run project script: CATEGORY=bottle uv run --env-file apps/APP/.env --project ap
 streamlit port: 8501
 
 make workflow:
-windows:
-    uv run pymake COMMAND
 make init-APP
-change apps/APP/.env if necessary
-export category=CATEGORY
 make build-APP
 make run-APP
 make dev-APP => keep container, build
 make connect-APP => keep container, build, open shell in container
 make clean-APP => remove containers
 
-some todos:
-nginx?
-unit tests => simple
-
 must have:
-versioning => done
-automation => done
-model registry => done
 retraining strategy => done
 deployment strategy => partially
-monitoring
 
-clean docker desktop disk space => Optimize-VHD -Path "C:\Users\<YOU>\AppData\Local\Docker\wsl\data\ext4.vhdx" -Mode Full
+clean docker desktop disk space:
+wsl --shutdown
+Optimize-VHD -Path "C:\Users\<YOU>\AppData\Local\Docker\wsl\disk\docker_data.vhdx" -Mode Full
 
+print file tree:
 cd /c/Users/shinm/datascientest/mlops_anomaly_detection && if command -v tree >/dev/null 2>&1; then tree -a -I '__pycache__|*.pyc|.git|.venv|venv|node_modules|logs' -L 4; else find . -maxdepth 4 \( -path './.git' -o -path './.venv' -o -path './venv' -o -path './node_modules' -o -path './__pycache__' -o -path './apps/airflow/logs' \) -prune -o -print | sed 's#^\./##' | sort; fi

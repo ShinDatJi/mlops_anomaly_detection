@@ -5,9 +5,12 @@ import seaborn as sns
 import os
 import requests
 
+api_port = os.environ["MY_API_PORT"]
+test_key = os.environ["MY_API_TEST_KEY"]
+
 def predict(category, version, image_file):
-    url = f"http://localhost:8000/predict/{category}/{version}"
-    response = requests.post(url, files={'image': open(image_file, 'rb')})
+    url = f"http://localhost:{api_port}/predict/{category}/{version}"
+    response = requests.post(url, files={'image': open(image_file, 'rb')}, headers={"x-api-key": test_key})
     if(response.status_code != 200):
         raise ValueError(f"Prediction API error: {response.status_code} - {response.text}")
     return response.json()
