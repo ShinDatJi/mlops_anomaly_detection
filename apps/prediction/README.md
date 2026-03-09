@@ -19,6 +19,8 @@ cp apps/prediction/default.env apps/prediction/.env
 Variables:
 
 - `PREDICTION_PORT`: host port exposed for API (default `8000`)
+- `API_KEY_ADMIN`: admin API key accepted via `X-API-Key` header
+- `API_KEY_TEST`: test API key accepted via `X-API-Key` header
 - `MODELS_PATH`: host path to model directory (default `./models`)
 - `VIRTUAL_MODELS_PATH`: container path for mounted models (default `./models`)
 - `LOG_LEVEL`: API log level (`INFO`, `DEBUG`, ...)
@@ -50,6 +52,14 @@ curl http://localhost:8000/status
 
 ```bash
 curl -X POST "http://localhost:8000/predict/bottle" \
+  -H "X-API-Key: ${API_KEY_TEST}" \
+  -F "image=@/path/to/image.png"
+```
+
+Unauthorized example:
+
+```bash
+curl -i -X POST "http://localhost:8000/predict/bottle" \
   -F "image=@/path/to/image.png"
 ```
 

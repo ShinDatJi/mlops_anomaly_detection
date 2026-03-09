@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -40,14 +41,25 @@ MONITORING_EVENTS_FILE = Path(
 MLFLOW_MODEL_NAME = os.getenv("MLFLOW_MODEL_NAME", "unknown")
 MLFLOW_MODEL_VERSION = os.getenv("MLFLOW_MODEL_VERSION", "unknown")
 MLFLOW_RUN_ID = os.getenv("MLFLOW_RUN_ID", "unknown")
+API_KEY_HEADER_NAME = "x-api-key"
 
 
 class StatusResponse(BaseModel):
     status: str
 
 
+class PredictParamsResponse(BaseModel):
+    patch_size: int
+    patches: int
+    overlap: float
+    height_cropping: int
+    width_cropping: int
+    threshold: float
+
+
 class PredictResponse(BaseModel):
     defective: bool
+    params: PredictParamsResponse
 
 
 app = FastAPI(
@@ -62,6 +74,26 @@ def normalize_metrics_path(path: str) -> str:
     if path.startswith("/predict/"):
         return "/predict/{category}"
     return path
+
+
+def get_configured_api_keys() -> tuple[str, ...]:
+    keys = (
+        os.getenv("API_KEY_ADMIN", "").strip(),
+        os.getenv("API_KEY_TEST", "").strip(),
+    )
+    return tuple(key for key in keys if key)
+
+
+def has_valid_api_key(request: Request) -> bool:
+    provided_key = request.headers.get(API_KEY_HEADER_NAME, "").strip()
+    if not provided_key:
+        return False
+
+    configured_keys = get_configured_api_keys()
+    if not configured_keys:
+        return False
+
+    return any(secrets.compare_digest(provided_key, key) for key in configured_keys)
 
 
 def write_inference_event(
@@ -143,6 +175,20 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
     category = (category or "").strip()
     filename = image.filename if image.filename else "unknown"
 
+    if not has_valid_api_key(request):
+        client = request.client.host if request.client else "unknown"
+        logger.warning("unauthorized_request path=%s client=%s", request.url.path, client)
+        write_inference_event(
+            request_id=request_id,
+            category=category or None,
+            filename=filename,
+            file_size_bytes=0,
+            defective=None,
+            status="error",
+            error_type="unauthorized",
+        )
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     if not category:
         logger.warning("missing_category filename=%s", filename)
         write_inference_event(
@@ -192,7 +238,7 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
     )
 
     try:
-        pred = predict(category, image_bytes)
+        pred, params = predict(category, image_bytes)
     except ValueError as exc:
         logger.warning("bad_image category=%s filename=%s error=%s", category, image.filename, str(exc))
         write_inference_event(
@@ -239,4 +285,4 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
         logger.warning("event_logging_failed category=%s filename=%s", category, image.filename, exc_info=True)
 
     logger.info("prediction_completed category=%s defective=%s", category, bool(pred))
-    return PredictResponse(defective=bool(pred))
+    return PredictResponse(defective=bool(pred), params=PredictParamsResponse(**params))

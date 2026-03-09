@@ -146,5 +146,20 @@ echo "  image=$(basename "${image_path}")"
 echo "  endpoint=${API_URL}/predict/${category}"
 echo
 
-curl -sS -X POST "${API_URL}/predict/${category}" -F "image=@${image_path}"
+read -r -s -p "API key (X-API-Key): " API_KEY
 echo
+
+if [[ -z "${API_KEY}" ]]; then
+  echo "API key is required. Request cancelled."
+  exit 1
+fi
+
+response="$(curl -sS -w $'\n%{http_code}' -X POST "${API_URL}/predict/${category}" \
+  -H "X-API-Key: ${API_KEY}" \
+  -F "image=@${image_path}")"
+
+http_status="${response##*$'\n'}"
+response_body="${response%$'\n'*}"
+
+echo "${response_body}"
+echo "HTTP status: ${http_status}"
