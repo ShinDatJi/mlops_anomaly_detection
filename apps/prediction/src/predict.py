@@ -1,25 +1,28 @@
-import json
-import os
-
 import cv2
-import keras.saving as saving
 import numpy as np
 import tensorflow as tf
+from mlflow import MlflowClient
+import mlflow
+import os
 
-models_dir = os.getenv("MODELS_DIR", "./models")
+tracking_uri = os.environ["MLFLOW_TRACKING_URI"]
 
-reports = {}
+models_params = {}
 models = {}
 
+def load_model(category: str, version: str) -> None:
+    mlflow.set_tracking_uri(tracking_uri)
+    client = MlflowClient()
 
-def load_files(category: str) -> None:
-    path = os.path.join(models_dir, category)
-    if category not in reports:
-        with open(os.path.join(path, "report.json"), "r", encoding="utf-8") as f:
-            reports[category] = json.load(f)
-    if category not in models:
-        models[category] = saving.load_model(os.path.join(path, "model.keras"))
-
+    model_version = client.get_model_version_by_alias(f"{category}_{version}", "champion")
+    run_id = model_version.run_id
+    run = client.get_run(run_id)
+    params = run.data.params
+    model = mlflow.keras.load_model(f"models:/{category}_{version}@champion")
+    if run_id not in models:
+        models[run_id] = model
+        models_params[run_id] = params
+    return run_id
 
 def load_image(image_bin: bytes, grayscale: bool):
     image_np = np.frombuffer(image_bin, np.uint8)
@@ -53,39 +56,36 @@ def create_patches(img, patch_size, patches, overlap, height_cropping, width_cro
     return tf.convert_to_tensor(patch_images)
 
 
-def predict_patched(model, images, threshold, patches, height_cropping, width_cropping):
+def predict_patched(model, images, threshold):
     logits = model.predict(images, verbose=False)[:, 0]
     pred_probas = tf.sigmoid(logits).numpy()
-
-    patches_x = patches - (2 * width_cropping)
-    patches_y = patches - (2 * height_cropping)
     pred = int(pred_probas.max() >= threshold)
-    pred_probas = pred_probas.reshape((patches_y, patches_x)).tolist()
+    pred_probas = pred_probas.tolist()
 
     return pred, pred_probas
 
 
-def predict(category: str, image_bin: bytes) -> tuple[int, dict[str, int | float]]:
-    load_files(category)
-    image = load_image(image_bin, reports[category]["grayscale"])
-    report = reports[category]
-    rep = report["preprocessing"]["params"]
-    patch_size = rep["patch_size"]
-    patches = rep["patches"]
-    overlap = rep["overlap"]
-    height_cropping = rep["height_cropping"]
-    width_cropping = rep["width_cropping"]
-    threshold = report["evaluation"]["params"]["threshold"]
+def predict(category: str, version: str, image_bin: bytes) -> int:
+    run_id = load_model(category, version)
+
+    grayscale = models_params[run_id]["grayscale"] == "True"
+    patch_size = int(models_params[run_id]["preprocessing_patch_size"])
+    patches = int(models_params[run_id]["preprocessing_patches"])
+    overlap = float(models_params[run_id]["preprocessing_overlap"])
+    height_cropping = int(models_params[run_id]["preprocessing_height_cropping"])
+    width_cropping = int(models_params[run_id]["preprocessing_width_cropping"])
+    threshold = float(models_params[run_id]["evaluation_threshold"])
+
+    image = load_image(image_bin, grayscale)
+    images = create_patches(image, patch_size, patches, overlap, height_cropping, width_cropping)
+    pred, pred_probas = predict_patched(models[run_id], images, threshold)
+
     params = {
-        "patch_size": patch_size,
         "patches": patches,
         "overlap": overlap,
         "height_cropping": height_cropping,
         "width_cropping": width_cropping,
-        "threshold": threshold,
+        "threshold": threshold
     }
 
-    images = create_patches(image, patch_size, patches, overlap, height_cropping, width_cropping)
-    pred, _ = predict_patched(models[category], images, threshold, patches, height_cropping, width_cropping)
-
-    return pred, params
+    return pred, pred_probas, params

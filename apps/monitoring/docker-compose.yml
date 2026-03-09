@@ -45,11 +45,6 @@ services:
       - ENABLE_LABEL_BASED_METRICS=${ENABLE_LABEL_BASED_METRICS}
       - EVIDENTLY_REFERENCE_PATH=/app/references/monitoring/evidently/reference.parquet
       - EVIDENTLY_CURRENT_PATH=/app/reports/monitoring/inference_events/events.jsonl
-      - CATEGORY=${CATEGORY}
-      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
-      - MLFLOW_MODEL_NAME=${MLFLOW_MODEL_NAME}
-      - MLFLOW_MODEL_VERSION=${MLFLOW_MODEL_VERSION}
-      - MLFLOW_RUN_ID=${MLFLOW_RUN_ID}
     command: ["python", "-m", "src.run_monitoring"]
 
   node-exporter:

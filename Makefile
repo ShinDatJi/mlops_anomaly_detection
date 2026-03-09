@@ -99,11 +99,7 @@ PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file
 init-prediction:
 	cp -i apps/prediction/default.env apps/prediction/.env
 build-prediction:
-	$(PREDICTION_CMD) build prediction
-dev-prediction:
-	$(PREDICTION_CMD) up --build
-connect-prediction:
-	$(PREDICTION_CMD) run --build prediction bash
+	$(PREDICTION_CMD) build
 start-prediction:
 	$(PREDICTION_CMD) up -d --wait
 stop-prediction:
@@ -112,11 +108,11 @@ stop-prediction:
 # monitoring
 MONITORING_CMD = docker compose -f apps/monitoring/docker-compose.yml --env-file .env --env-file apps/monitoring/.env --project-directory ./
 init-monitoring:
-	cp apps/monitoring/default.env apps/monitoring/.env
+	cp -i apps/monitoring/default.env apps/monitoring/.env
 build-monitoring:
 	$(MONITORING_CMD) build
 start-monitoring:
-	$(MONITORING_CMD) up -d --build
+	$(MONITORING_CMD) up -d --wait
 stop-monitoring:
 	$(MONITORING_CMD) down
 
@@ -136,6 +132,7 @@ build-all:
 	$(MAKE) build-data
 	$(MAKE) build-modeling
 	$(MAKE) build-prediction
+	$(MAKE) build-monitoring
 start-all:
 	$(MAKE) start-minio
 	$(MAKE) start-mlflow
