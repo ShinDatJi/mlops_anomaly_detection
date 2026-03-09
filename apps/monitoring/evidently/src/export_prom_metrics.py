@@ -33,6 +33,16 @@ DATA_QUALITY_ISSUES_RATE = Gauge(
     "Share of records with data quality issues",
     ["category", "model_name", "model_version", "run_id"],
 )
+DATA_QUALITY_ISSUES_COUNT = Gauge(
+    "evidently_data_quality_issues_count",
+    "Number of data quality issues in the current batch",
+    ["category", "model_name", "model_version", "run_id"],
+)
+DATA_QUALITY_ISSUE_TYPE_COUNT = Gauge(
+    "evidently_data_quality_issue_type_count",
+    "Number of data quality issues per issue type in the current batch",
+    ["issue_type", "category", "model_name", "model_version", "run_id"],
+)
 ANOMALY_RATE = Gauge(
     "evidently_anomaly_rate",
     "Anomaly rate (anomalies / total predictions)",
@@ -91,6 +101,19 @@ def publish_summary(labels: Mapping[str, str], summary: Mapping[str, float]) -> 
     DATA_DRIFT.labels(**labels).set(summary.get("data_drift_score", 0.0))
     MISSING_SHARE.labels(**labels).set(summary.get("missing_values_share", 0.0))
     DATA_QUALITY_ISSUES_RATE.labels(**labels).set(summary.get("data_quality_issues_rate", 0.0))
+    DATA_QUALITY_ISSUES_COUNT.labels(**labels).set(summary.get("data_quality_issues_count", 0.0))
+    DATA_QUALITY_ISSUE_TYPE_COUNT.labels(issue_type="corrupted_images", **labels).set(
+        summary.get("corrupted_images_count", 0.0)
+    )
+    DATA_QUALITY_ISSUE_TYPE_COUNT.labels(issue_type="unexpected_categories", **labels).set(
+        summary.get("unexpected_categories_count", 0.0)
+    )
+    DATA_QUALITY_ISSUE_TYPE_COUNT.labels(issue_type="no_category_sent", **labels).set(
+        summary.get("no_category_count", 0.0)
+    )
+    DATA_QUALITY_ISSUE_TYPE_COUNT.labels(issue_type="out_of_range_or_invalid_image", **labels).set(
+        summary.get("out_of_range_or_invalid_image_count", 0.0)
+    )
     ANOMALY_RATE.labels(**labels).set(summary.get("anomaly_rate", 0.0))
     OUTPUT_DRIFT_SCORE.labels(**labels).set(summary.get("output_drift_score", 0.0))
     PRED_POS_RATE.labels(**labels).set(summary.get("prediction_positive_rate", 0.0))
