@@ -134,3 +134,8 @@ stop-all:
 	$(MAKE) stop-mlflow
 	$(MAKE) stop-airflow
 	$(MAKE) stop-prediction
+
+start-demo:
+	uv run --project ./demo/ streamlit run demo/src/app.py
+start-api:
+	uv run --directory ./api uvicorn main:app --host 0.0.0.0 --port 8000
