@@ -87,6 +87,24 @@
       "targets": [{"expr": "evidently_data_quality_issues_rate", "legendFormat": "quality issues", "refId": "A"}],
       "title": "Data Quality Issues Rate",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+      "id": 9,
+      "targets": [{"expr": "evidently_data_quality_issues_count", "legendFormat": "{{category}}", "refId": "A"}],
+      "title": "Data Quality Issues Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+      "id": 10,
+      "targets": [{"expr": "evidently_data_quality_issue_type_count", "legendFormat": "{{category}} {{issue_type}}", "refId": "A"}],
+      "title": "Data Quality Issue Types Detected",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -99,6 +117,6 @@
   "timezone": "browser",
   "title": "Input Data Behavior",
   "uid": "input-data-behavior",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

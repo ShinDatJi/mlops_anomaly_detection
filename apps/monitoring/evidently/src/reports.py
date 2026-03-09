@@ -11,6 +11,11 @@ class MonitoringSummary:
     data_drift_score: float = 0.0
     missing_values_share: float = 0.0
     data_quality_issues_rate: float = 0.0
+    data_quality_issues_count: float = 0.0
+    corrupted_images_count: float = 0.0
+    unexpected_categories_count: float = 0.0
+    no_category_count: float = 0.0
+    out_of_range_or_invalid_image_count: float = 0.0
     anomaly_rate: float = 0.0
     output_drift_score: float = 0.0
     prediction_positive_rate: float = 0.0
@@ -69,22 +74,80 @@ def _outlier_rate_iqr(df: pd.DataFrame, column: str) -> float:
     return float(outliers / len(numeric))
 
 
-def _data_quality_issues_rate(df: pd.DataFrame) -> float:
-    if df.empty:
-        return 0.0
+def _safe_text_series(df: pd.DataFrame, column: str) -> pd.Series:
+    if column not in df.columns:
+        return pd.Series([None] * len(df), index=df.index, dtype="object")
+    return df[column]
 
-    issue_mask = pd.Series(False, index=df.index)
-    if "status" in df.columns:
-        issue_mask = issue_mask | (df["status"].fillna("error") != "ok")
-    if "category" in df.columns:
-        issue_mask = issue_mask | (df["category"].isna()) | (df["category"].astype(str).str.strip() == "")
-    if "filename" in df.columns:
-        issue_mask = issue_mask | (df["filename"].isna()) | (df["filename"].astype(str).str.strip() == "")
-    if "file_size_bytes" in df.columns:
-        size = pd.to_numeric(df["file_size_bytes"], errors="coerce").fillna(0)
-        issue_mask = issue_mask | (size <= 0)
 
-    return float(issue_mask.mean())
+def _safe_numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
+    if column not in df.columns:
+        return pd.Series([None] * len(df), index=df.index, dtype="float64")
+    return pd.to_numeric(df[column], errors="coerce")
+
+
+def _data_quality_issue_counts(
+    reference_df: pd.DataFrame,
+    current_df: pd.DataFrame,
+) -> dict[str, int]:
+    if current_df.empty:
+        return {
+            "data_quality_issues_count": 0,
+            "corrupted_images_count": 0,
+            "unexpected_categories_count": 0,
+            "no_category_count": 0,
+            "out_of_range_or_invalid_image_count": 0,
+        }
+
+    error_type = _safe_text_series(current_df, "error_type")
+    category = _safe_text_series(current_df, "category")
+    filename = _safe_text_series(current_df, "filename")
+    file_size = _safe_numeric_series(current_df, "file_size_bytes")
+    prediction = _safe_numeric_series(current_df, "prediction")
+
+    normalized_category = category.astype("string").str.strip().str.lower()
+    missing_category_mask = normalized_category.isna() | (normalized_category == "") | (error_type == "missing_category")
+
+    expected_categories: set[str] = set()
+    if "category" in reference_df.columns:
+        expected_categories = {
+            str(value).strip().lower()
+            for value in reference_df["category"].dropna().tolist()
+            if str(value).strip()
+        }
+    if expected_categories:
+        unexpected_category_mask = (~missing_category_mask) & (~normalized_category.isin(expected_categories))
+    else:
+        unexpected_category_mask = pd.Series(False, index=current_df.index)
+    unexpected_category_mask = unexpected_category_mask | (error_type == "invalid_category")
+
+    corrupted_mask = error_type == "incorrect_image_file"
+
+    normalized_filename = filename.astype("string").str.strip()
+    missing_or_empty_filename = normalized_filename.isna() | (normalized_filename == "")
+    invalid_prediction_mask = prediction.notna() & (~prediction.isin([0, 1]))
+    out_of_range_or_invalid_image_mask = (
+        (error_type == "missing_image_file")
+        | (error_type == "prediction_error")
+        | ((file_size <= 0) & file_size.notna())
+        | missing_or_empty_filename
+        | invalid_prediction_mask
+    )
+
+    any_issue_mask = (
+        corrupted_mask
+        | unexpected_category_mask
+        | missing_category_mask
+        | out_of_range_or_invalid_image_mask
+    )
+
+    return {
+        "data_quality_issues_count": int(any_issue_mask.sum()),
+        "corrupted_images_count": int(corrupted_mask.sum()),
+        "unexpected_categories_count": int(unexpected_category_mask.sum()),
+        "no_category_count": int(missing_category_mask.sum()),
+        "out_of_range_or_invalid_image_count": int(out_of_range_or_invalid_image_mask.sum()),
+    }
 
 
 def _success_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -169,11 +232,19 @@ def run_evidently_reports(
     anomaly_rate = _mean_prediction(current_success_df)
     reference_positive_rate = _mean_prediction(reference_success_df)
     output_drift_score = abs(anomaly_rate - reference_positive_rate)
+    dq_counts = _data_quality_issue_counts(reference_df=reference_df, current_df=current_df)
+    dq_total_count = dq_counts["data_quality_issues_count"]
+    dq_total_rate = _safe_rate(dq_total_count, len(current_df))
 
     summary = MonitoringSummary(
         data_drift_score=_simple_data_drift_score(reference_success_df, current_success_df),
         missing_values_share=float(current_success_df.isna().mean().mean()),
-        data_quality_issues_rate=_data_quality_issues_rate(current_df),
+        data_quality_issues_rate=dq_total_rate,
+        data_quality_issues_count=float(dq_total_count),
+        corrupted_images_count=float(dq_counts["corrupted_images_count"]),
+        unexpected_categories_count=float(dq_counts["unexpected_categories_count"]),
+        no_category_count=float(dq_counts["no_category_count"]),
+        out_of_range_or_invalid_image_count=float(dq_counts["out_of_range_or_invalid_image_count"]),
         anomaly_rate=anomaly_rate,
         output_drift_score=output_drift_score,
         prediction_positive_rate=anomaly_rate,
@@ -200,8 +271,21 @@ def run_evidently_reports(
         )
         summary.outliers_rate = _outlier_rate_iqr(current_success_df, "file_size_bytes")
 
+    issue_type_counts = {
+        "corrupted_images": dq_counts["corrupted_images_count"],
+        "unexpected_categories": dq_counts["unexpected_categories_count"],
+        "no_category_sent": dq_counts["no_category_count"],
+        "out_of_range_or_invalid_image": dq_counts["out_of_range_or_invalid_image_count"],
+    }
+    detected_issue_types = [issue for issue, count in issue_type_counts.items() if count > 0]
+
     report_payload: Dict[str, Any] = {
         "summary": summary.__dict__,
+        "data_quality_issues": {
+            "count": dq_counts["data_quality_issues_count"],
+            "types_detected": detected_issue_types,
+            "type_counts": issue_type_counts,
+        },
         "rows": {
             "reference": int(len(reference_df)),
             "reference_success": int(len(reference_success_df)),

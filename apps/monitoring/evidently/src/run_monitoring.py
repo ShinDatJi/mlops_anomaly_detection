@@ -62,6 +62,32 @@ def _emit_cycle_log(row_counts: dict[str, int], summary: dict, report_payload: d
     logger.info(json.dumps(payload, sort_keys=True))
 
 
+def _publishable_categories(reference_df, current_df) -> list[str]:
+    if "category" not in current_df.columns:
+        return []
+
+    current_ok_df = current_df
+    if "status" in current_ok_df.columns:
+        current_ok_df = current_ok_df[current_ok_df["status"] == "ok"]
+
+    current_categories = sorted(
+        {str(c).strip() for c in current_ok_df["category"].dropna().tolist() if str(c).strip()}
+    )
+    if not current_categories:
+        return []
+
+    if "category" not in reference_df.columns:
+        return current_categories
+
+    reference_categories_normalized = {
+        str(c).strip().lower() for c in reference_df["category"].dropna().tolist() if str(c).strip()
+    }
+    if not reference_categories_normalized:
+        return current_categories
+
+    return [category for category in current_categories if category.lower() in reference_categories_normalized]
+
+
 def run_once() -> None:
     reports_root = Path("/app/reports/monitoring")
     reference_root = Path("/app/references/monitoring")
@@ -101,11 +127,7 @@ def run_once() -> None:
     }
     publish_summary({"category": "all", **base_labels}, summary)
 
-    categories: list[str] = []
-    if "category" in current_df.columns:
-        categories = sorted(
-            {str(c).strip() for c in current_df["category"].dropna().tolist() if str(c).strip()}
-        )
+    categories = _publishable_categories(reference_df=reference_df, current_df=current_df)
 
     for category in categories:
         current_slice = current_df[current_df["category"] == category]
