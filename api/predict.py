@@ -16,12 +16,14 @@ def load_model(category: str, version: str) -> None:
     client = MlflowClient()
 
     model_version = client.get_model_version_by_alias(f"{category}_{version}", "champion")
-    run = client.get_run(model_version.run_id)
+    run_id = model_version.run_id
+    run = client.get_run(run_id)
     params = run.data.params
     model = mlflow.keras.load_model(f"models:/{category}_{version}@champion")
-    if category not in models:
-        models[category] = model
-        models_params[category] = params
+    if run_id not in models:
+        models[run_id] = model
+        models_params[run_id] = params
+    return run_id
 
 def load_image(image_bin: bytes, grayscale: bool):
     image_np = np.frombuffer(image_bin, np.uint8)
@@ -65,19 +67,19 @@ def predict_patched(model, images, threshold):
 
 
 def predict(category: str, version: str, image_bin: bytes) -> int:
-    load_model(category, version)
+    run_id = load_model(category, version)
 
-    grayscale = models_params[category]["grayscale"] == "True"
-    patch_size = int(models_params[category]["preprocessing_patch_size"])
-    patches = int(models_params[category]["preprocessing_patches"])
-    overlap = float(models_params[category]["preprocessing_overlap"])
-    height_cropping = int(models_params[category]["preprocessing_height_cropping"])
-    width_cropping = int(models_params[category]["preprocessing_width_cropping"])
-    threshold = float(models_params[category]["evaluation_threshold"])
+    grayscale = models_params[run_id]["grayscale"] == "True"
+    patch_size = int(models_params[run_id]["preprocessing_patch_size"])
+    patches = int(models_params[run_id]["preprocessing_patches"])
+    overlap = float(models_params[run_id]["preprocessing_overlap"])
+    height_cropping = int(models_params[run_id]["preprocessing_height_cropping"])
+    width_cropping = int(models_params[run_id]["preprocessing_width_cropping"])
+    threshold = float(models_params[run_id]["evaluation_threshold"])
 
     image = load_image(image_bin, grayscale)
     images = create_patches(image, patch_size, patches, overlap, height_cropping, width_cropping)
-    pred, pred_probas = predict_patched(models[category], images, threshold)
+    pred, pred_probas = predict_patched(models[run_id], images, threshold)
 
     params = {
         "patches": patches,

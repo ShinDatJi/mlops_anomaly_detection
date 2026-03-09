@@ -26,7 +26,7 @@ For app-specific details, see `apps/prediction/README.md`.
 
 Project Organization
 ------------
-
+    
     ├── LICENSE
     ├── README.md
     ├── Makefile

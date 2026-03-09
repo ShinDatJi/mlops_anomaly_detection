@@ -59,7 +59,7 @@ def main():
         "overlap": 0.5,
         "good_fraction": 0.25,
         "oversampling": True, 
-        "threshold_mode": "use_threshold" if "threshold_mode" not in config["preprocessing"] else "auto",
+        "threshold_mode": "use-threshold" if "threshold_mode" not in config["preprocessing"] else "auto",
         "threshold": 0.01,
         "threshold_factor": 1,
         "spread": 0.025,

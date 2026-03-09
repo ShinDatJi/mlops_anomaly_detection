@@ -21,9 +21,9 @@ def create_patches(
         random_trans=0, random_rot=0, random_trans_sub=0, random_rot_sub=0,
         fill_mode="constant", fill_mode_sub="constant", fill_value=0):
 
-    if threshold_mode != "use_threshold":
+    if threshold_mode != "use-threshold":
         if threshold_mode == "auto":
-            threshold = "full_auto"
+            threshold = "full-auto"
 
     path0, path1 = prepare_folders(data_path)
 

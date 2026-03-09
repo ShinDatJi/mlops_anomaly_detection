@@ -136,6 +136,6 @@ stop-all:
 	$(MAKE) stop-prediction
 
 start-demo:
-	uv run --project ./demo/ streamlit run demo/src/app.py
+	uv run --env-file .env --project ./demo/ streamlit run demo/src/app.py
 start-api:
-	uv run --directory ./api uvicorn main:app --host 0.0.0.0 --port 8000
+	uv run --env-file .env --project ./api uvicorn --app-dir ./api/ main:app --host 0.0.0.0 --port 8000
