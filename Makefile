@@ -95,7 +95,7 @@ run-modeling:
 	$(MAKE) run-modeling-evaluate-model
 
 # prediction
-PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/.env --project-directory ./
+PREDICTION_CMD = docker compose -f apps/prediction/docker-compose.yml --env-file .env --env-file apps/prediction/default.env --env-file apps/prediction/.env --project-directory ./
 init-prediction:
 	cp -i apps/prediction/default.env apps/prediction/.env
 build-prediction:

@@ -65,7 +65,7 @@ def predict_patched(model, images, threshold, patches, height_cropping, width_cr
     return pred, pred_probas
 
 
-def predict(category: str, image_bin: bytes) -> int:
+def predict(category: str, image_bin: bytes) -> tuple[int, dict[str, int | float]]:
     load_files(category)
     image = load_image(image_bin, reports[category]["grayscale"])
     report = reports[category]
@@ -76,8 +76,16 @@ def predict(category: str, image_bin: bytes) -> int:
     height_cropping = rep["height_cropping"]
     width_cropping = rep["width_cropping"]
     threshold = report["evaluation"]["params"]["threshold"]
+    params = {
+        "patch_size": patch_size,
+        "patches": patches,
+        "overlap": overlap,
+        "height_cropping": height_cropping,
+        "width_cropping": width_cropping,
+        "threshold": threshold,
+    }
 
     images = create_patches(image, patch_size, patches, overlap, height_cropping, width_cropping)
     pred, _ = predict_patched(models[category], images, threshold, patches, height_cropping, width_cropping)
 
-    return pred
+    return pred, params
