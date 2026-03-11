@@ -9,15 +9,17 @@ dependencies = [
     "opencv-python-headless==4.12.0.88",
     "pandas==2.3.3",
     "seaborn==0.13.2",
-    "keras==3.12.0",
     "scikit-learn==1.7.2",
     "tensorflow==2.20.0",
     "mlflow==3.9.0",
     "numpy==2.2.6",
+    "boto3==1.42.57",
 ]
 
 [project.scripts]
-load_initial_models = "modeling.setup.load_initial_models:main"
+load_initial_models = "modeling.loading.load_initial_models:main"
+load_raw_data = "modeling.loading.load_raw_data:main"
+load_config = "modeling.loading.load_config:main"
 preprocess_data = "modeling.preprocessing.preprocess_data:main"
 train_model = "modeling.training.train_model:main"
 evaluate_model = "modeling.evaluation.evaluate_model:main"

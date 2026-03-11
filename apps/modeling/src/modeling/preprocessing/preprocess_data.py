@@ -10,6 +10,7 @@ import modeling.tools as tools
 
 def main():
     category = os.environ["CATEGORY"]
+    version = os.environ["VERSION"]
     config_file = os.environ["CONFIG_FILE"]
     data_path = os.environ["DATA_PATH"]
     clean_db_file = os.path.join(data_path, os.environ["DATA_CLEAN_DB"])
@@ -18,11 +19,16 @@ def main():
     train_path = os.path.join(data_path, os.environ["DATA_TRAIN_DIR"])
     test_path = os.path.join(data_path, os.environ["DATA_TEST_DIR"])
     test_patching_path = os.path.join(data_path, os.environ["DATA_TEST_PATCHING_DIR"])
+    loading_path = os.environ["REPORTS_LOADING_PATH"]
     reports_path = os.environ["REPORTS_PREPROCESSING_PATH"]
+    loading_report_file = os.path.join(loading_path, os.environ["REPORTS_REPORT"])
     report_file = os.path.join(reports_path, os.environ["REPORTS_REPORT"])
 
     with open(config_file, "r") as f:
         config = json.load(f)
+
+    with open(loading_report_file, "r") as f:
+        report = json.load(f)
 
     os.makedirs(reports_path, exist_ok=True)
 
@@ -39,26 +45,22 @@ def main():
     df_train.to_csv(train_db_file)
     df_test.to_csv(test_db_file)
 
-    grayscale = bool(df_train.grayscale.iloc[0])
-    img_size = int(df_train.img_size.iloc[0])
-
-    report = {}
-    report["category"] = category
-    report["img_size"] = img_size
-    report["grayscale"] = grayscale
     report["preparation"] = {}
     rep = report["preparation"]
     rep["params"] = params
 
     # Preprocessing
 
+    img_size = report["img_size"]
+
     params = {
         "patch_size": 78,
         "patches": 5,
         "overlap": 0.5,
         "good_fraction": 0.25,
-        "oversampling": True,
-        "threshold": "full-auto",
+        "oversampling": True, 
+        "threshold_mode": "use-threshold" if "threshold_mode" not in config["preprocessing"] else "auto",
+        "threshold": 0.01,
         "threshold_factor": 1,
         "spread": 0.025,
         "height_cropping": 0,
@@ -83,7 +85,7 @@ def main():
 
     utils.set_random_seed(params["random_state"])
 
-    image_counts, threshold, stats = create_patches.create_patches(train_path, df_train, keep_good=True, **params)
+    image_counts, threshold, stats = create_patches.create_patches(train_path, df_train, img_size, keep_good=True, **params)
     rep["threshold"] = float(np.round(threshold, 3))
     rep["train_images"] = image_counts
     rep["train_images"]["anomalies"] = stats
@@ -97,10 +99,10 @@ def main():
     params["random_trans_sub"] = False
     params["random_rot_sub"] = False
 
-    image_counts, threshold, stats = create_patches.create_patches(test_path, df_test, **params)
+    image_counts, threshold, stats = create_patches.create_patches(test_path, df_test, img_size, **params)
     rep["test_images"] = image_counts
     rep["test_images"]["anomalies"] = stats
-    image_counts, threshold, stats = create_patches.create_patches(test_patching_path, df_test, keep_all=True, **params)
+    image_counts, threshold, stats = create_patches.create_patches(test_patching_path, df_test, img_size, keep_all=True, **params)
     rep["test_patching_images"] = image_counts
     rep["test_patching_images"]["anomalies"] = stats
 
@@ -114,16 +116,22 @@ def main():
 
     params = tools.extract_params_from_report(report)
     metrics = tools.extract_preprocessing_metrics_from_report(report)
+    dataset = mlflow.data.from_pandas(
+        df, source=clean_db_file, name=f"{category}_{version}-clean"
+    )
 
-    mlflow.set_tracking_uri(os.environ["TRACKING_URI"])
-    mlflow.set_experiment(f"preprocessing-{category}")
-    mlflow.set_experiment_tags({"stage": "preprocessing", "dataset": category})
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+    mlflow.set_experiment(f"preprocessing-{category}_{version}")
+    mlflow.set_experiment_tags({"stage": "preprocessing", "dataset": category, "version": version})
 
     with mlflow.start_run():
+        mlflow.log_input(dataset, context="clean_data")
         mlflow.log_params(params)
         mlflow.log_metrics(metrics)
         mlflow.log_dict(config, "config.json")
         mlflow.log_dict(report, "report.json")
+        mlflow.log_artifact(train_db_file)
+        mlflow.log_artifact(test_db_file)
 
 if __name__ == "__main__":
     main()

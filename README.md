@@ -1,10 +1,20 @@
-Project Name
-==============================
+# MLOps MVTec Anomaly Detection
 
-This repo is a Starting Pack for DS projects. You can rearrange the structure to make it fits your project.
+MVTec dataset: <https://www.mvtec.com/company/research/datasets/mvtec-ad>
 
-Prediction API
-------------
+## Project Overview
+
+![project overview](/demo/figures/architecture.png)
+
+* Data: public MVTec AD dataset (industrial anomaly detection)
+* Modeling: CNN for image classification with patching
+* Prediction: FastAPI service for real-time inference and monitoring
+
+## Architecture
+
+![global architecture](/demo/figures/introduction.png)
+
+## Prediction API
 
 The prediction service is maintained only under `apps/prediction`.
 Root-level API duplicates were removed.
@@ -28,9 +38,9 @@ Monitoring modes:
 
 For app-specific details, see `apps/prediction/README.md`.
 
-Project Organization
-------------
+## Project Organization
 
+```text
     ├── LICENSE
     ├── README.md
     ├── Makefile
@@ -60,7 +70,4 @@ Project Organization
     ├── models
     ├── references
     └── reports
-
---------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+```

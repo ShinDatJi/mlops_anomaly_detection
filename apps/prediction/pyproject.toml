@@ -3,14 +3,14 @@ name = "prediction"
 version = "0.1.0"
 description = "Prediction API service"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
-    "fastapi>=0.115.0",
-    "keras==3.12.0",
-    "numpy>=2.2.6",
+    "fastapi==0.115.0",
+    "numpy==2.2.6",
     "opencv-python-headless==4.12.0.88",
-    "prometheus-client>=0.21.0",
-    "python-multipart>=0.0.9",
+    "prometheus-client==0.21.0",
+    "python-multipart==0.0.9",
     "tensorflow==2.20.0",
-    "uvicorn>=0.30.0",
+    "uvicorn==0.30.0",
+    "mlflow==3.9.0"
 ]

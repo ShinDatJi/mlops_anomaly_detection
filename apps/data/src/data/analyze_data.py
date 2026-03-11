@@ -1,25 +1,5 @@
 import pandas as pd
 import cv2
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
-
-def count_images(df, reports_path):
-    df = df.copy()
-    df = df[df.subset != "ground_truth"]
-    df.loc[df.subset == "train", "type"] = "train good"
-    df.loc[(df.subset == "test") & (df.anomaly == "good"), "type"] = "test good"
-    df.loc[(df.subset == "test") & (df.anomaly != "good"), "type"] = "test defective"
-    df_plt = df.groupby(["type"]).agg({"file":"count"})
-    df_plt_sorted = df_plt.sort_index(ascending=False)
-    print((df_plt_sorted))
-    plt.figure(figsize=(7, 5), layout="constrained")
-    sns.barplot(df_plt_sorted, x=df_plt_sorted.file, y=df_plt_sorted.index)
-    plt.title("Image count")
-    plt.xlabel("count")
-    plt.ylabel("subset")
-    plt.savefig(os.path.join(reports_path, "image_count.png"))
-    plt.close()
 
 def calc_statistics(df):
     df = df.copy()
@@ -90,11 +70,9 @@ def calc_mask_coverage(df):
     df.loc[(df.subset == "test") & (df.anomaly != "good"), "anomaly_coverage"] = df[(df.subset == "ground_truth")].anomaly_coverage.values
     return df
 
-def analyze_data(df, reports_path):
-    print(reports_path)
+def analyze_data(df):
     print(df.head())
 
-    count_images(df, reports_path)
     df = calc_statistics(df)
     df = calc_image_dimensions(df)
     df = calc_image_color(df)

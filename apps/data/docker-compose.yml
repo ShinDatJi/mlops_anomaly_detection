@@ -1,16 +1,24 @@
 services:
-  data:
-    container_name: data-$CATEGORY
+  ingest-data:
     working_dir: /app
+    image: anomaly-detection/data:latest
     build:
       context: ./apps/data/
+    command: .venv/bin/ingest_data
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:rw
-      - $REPORTS_PATH:/app/reports:rw
+      - ${DATA_RAW_PATH}:/app/${S3_DATA_RAW_PATH}:ro
     environment:
-      - DATA_RAW_PATH=$VIRTUAL_DATA_RAW_PATH
-      - DATA_PATH=./data/processed
-      - DATA_CLEAN_DB=$DATA_CLEAN_DB
-      - REPORTS_PATH=./reports
-      - PYTHONUNBUFFERED=1
+      DATA_RAW_PATH: ${S3_DATA_RAW_PATH}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_DATA_FILE: ${S3_DATA_FILE}
+      PYTHONUNBUFFERED: 1
+      GIT_PYTHON_REFRESH: silent
+    networks:
+      - minio
+
+networks:
+  minio:
+    external: true

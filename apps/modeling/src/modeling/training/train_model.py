@@ -14,6 +14,7 @@ import modeling.tools as tools
 
 def main():
     category = os.environ["CATEGORY"]
+    version = os.environ["VERSION"]
     config_file = os.environ["CONFIG_FILE"]
     data_path = os.environ["DATA_PATH"]
     train_path = os.path.join(data_path, os.environ["DATA_TRAIN_DIR"])
@@ -219,10 +220,10 @@ def main():
 
     params = tools.extract_params_from_report(report)
     metrics = tools.extract_training_metrics_from_report(report)
-        
-    mlflow.set_tracking_uri(os.environ["TRACKING_URI"])
-    mlflow.set_experiment(f"training-{category}")
-    mlflow.set_experiment_tags({"stage": "training", "dataset": category})
+
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+    mlflow.set_experiment(f"training-{category}_{version}")
+    mlflow.set_experiment_tags({"stage": "training", "dataset": category, "version": version})
 
     with mlflow.start_run():
         mlflow.log_params(params)

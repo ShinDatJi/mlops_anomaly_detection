@@ -40,10 +40,11 @@ def _extract_training_params(rep, params):
 def _extract_evaluation_params(rep, params):
     for k, v in rep.items():
         params[f"evaluation_{k}"] = v
-
+        
 def extract_params_from_report(report):
     params = {}
     params["category"] = report["category"]
+    params["version"] = report["version"]
     params["img_size"] = report["img_size"]
     params["grayscale"] = report["grayscale"]
 
@@ -59,6 +60,10 @@ def extract_params_from_report(report):
         _extract_evaluation_params(report["evaluation"]["params"], params)
 
     return params
+
+def extract_loading_metrics_from_report(report):
+    rep = report["loading"]["metrics"]
+    return rep.copy()
 
 def extract_preprocessing_metrics_from_report(report):
     rep = report["preprocessing"]["metrics"]

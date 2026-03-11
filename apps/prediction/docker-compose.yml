@@ -1,22 +1,37 @@
 services:
   prediction:
-    container_name: prediction-api
+    container_name: api
     working_dir: /app
+    image: anomaly-detection/prediction:latest
     build:
       context: ./apps/prediction/
     ports:
-      - $PREDICTION_PORT:8000
+      - ${PREDICTION_PORT}:8000
     volumes:
-      - $MODELS_PATH:/app/$VIRTUAL_MODELS_PATH:ro
-      - $MONITORING_REPORTS_PATH:/app/$VIRTUAL_MONITORING_REPORTS_PATH
+      - ${MODELS_PATH}:/app/models:ro
+      - ${MONITORING_REPORTS_PATH}:/app/reports/monitoring:rw
     environment:
-      - MODELS_DIR=$VIRTUAL_MODELS_PATH
-      - MONITORING_EVENTS_FILE=$VIRTUAL_MONITORING_REPORTS_PATH/$MONITORING_EVENTS_FILE
-      - MLFLOW_MODEL_NAME=$MLFLOW_MODEL_NAME
-      - MLFLOW_MODEL_VERSION=$MLFLOW_MODEL_VERSION
-      - MLFLOW_RUN_ID=$MLFLOW_RUN_ID
-      - API_KEY_ADMIN=$API_KEY_ADMIN
-      - API_KEY_TEST=$API_KEY_TEST
-      - LOG_LEVEL=$LOG_LEVEL
-      - PYTHONUNBUFFERED=1
+      - MODELS_DIR=/app/models
+      - MONITORING_EVENTS_FILE=/app/reports/monitoring/${MONITORING_EVENTS_FILE}
+      - MLFLOW_MODEL_NAME=${MLFLOW_MODEL_NAME}
+      - MLFLOW_MODEL_VERSION=${MLFLOW_MODEL_VERSION}
+      - MLFLOW_RUN_ID=${MLFLOW_RUN_ID}
+      - API_KEY_ADMIN=${API_KEY_ADMIN}
+      - API_KEY_TEST=${API_KEY_TEST}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME}
+      - MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}
+      - LOG_LEVEL=${LOG_LEVEL}
       - TF_CPP_MIN_LOG_LEVEL=1
+    networks:
+      - mlflow
+    healthcheck:
+      test: curl --fail http://localhost:8000/status || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+networks:
+  mlflow:
+    external: true

@@ -15,14 +15,17 @@ def prepare_folders(data_path):
     return path0, path1
 
 def create_patches(
-        data_path, df, random_state, patch_size, patches, keep_all=False, keep_good=False, 
-        good_fraction=1, spread=0.1, threshold="full-auto", threshold_factor=1, overlap=0,
+        data_path, df, img_size, random_state, patch_size, patches, keep_all=False, keep_good=False, 
+        good_fraction=1, spread=0.1, threshold_mode="full-auto", threshold=0.01, threshold_factor=1, overlap=0,
         height_cropping=0, width_cropping=0, fast_patching=True, oversampling=True,
         random_trans=0, random_rot=0, random_trans_sub=0, random_rot_sub=0,
         fill_mode="constant", fill_mode_sub="constant", fill_value=0):
 
+    if threshold_mode != "use-threshold":
+        if threshold_mode == "auto":
+            threshold = "full-auto"
+
     path0, path1 = prepare_folders(data_path)
-    img_size = df.img_size.iloc[0]
 
     step = int(img_size / (patches + overlap / (1 - overlap)))
     patch_size_overlap = int(step / (1 - overlap))

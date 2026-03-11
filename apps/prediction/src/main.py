@@ -60,6 +60,7 @@ class PredictParamsResponse(BaseModel):
 class PredictResponse(BaseModel):
     defective: bool
     params: PredictParamsResponse
+    pred_probas: list[float]
 
 
 app = FastAPI(
@@ -165,14 +166,15 @@ def status() -> StatusResponse:
 
 
 @app.post(
-    "/predict/{category}",
+    "/predict/{category}/{version}",
     response_model=PredictResponse,
     tags=["prediction"],
     summary="Predict if an image is defective",
 )
-async def predict_category(category: str, request: Request, image: UploadFile = File(...)) -> PredictResponse:
+async def predict_category(category: str, version: str, request: Request, image: UploadFile = File(...)) -> PredictResponse:
     request_id = request.headers.get("x-request-id", str(uuid4()))
     category = (category or "").strip()
+    version = (version or "").strip()
     filename = image.filename if image.filename else "unknown"
 
     if not has_valid_api_key(request):
@@ -219,6 +221,10 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
     image_bytes = await image.read()
     if not image_bytes:
         logger.warning("empty_upload category=%s filename=%s", category, image.filename)
+
+    image_bytes = await image.read()
+    if not image_bytes:
+        logger.warning("empty_upload category=%s version=%s filename=%s", category, version, image.filename)
         write_inference_event(
             request_id=request_id,
             category=category,
@@ -231,16 +237,17 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
         raise HTTPException(status_code=400, detail="Empty image upload")
 
     logger.info(
-        "prediction_started category=%s filename=%s bytes=%s",
+        "prediction_started category=%s version=%s filename=%s bytes=%s",
         category,
+        version,
         image.filename,
         len(image_bytes),
     )
 
     try:
-        pred, params = predict(category, image_bytes)
+        pred, pred_probas, params = predict(category, version, image_bytes)
     except ValueError as exc:
-        logger.warning("bad_image category=%s filename=%s error=%s", category, image.filename, str(exc))
+        logger.warning("bad_image category=%s version=%s filename=%s error=%s", category, version, image.filename, str(exc))
         write_inference_event(
             request_id=request_id,
             category=category,
@@ -252,7 +259,7 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
         )
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception:
-        logger.exception("prediction_failed category=%s filename=%s", category, image.filename)
+        logger.exception("prediction_failed category=%s version=%s filename=%s", category, version, image.filename)
         write_inference_event(
             request_id=request_id,
             category=category,
@@ -282,7 +289,7 @@ async def predict_category(category: str, request: Request, image: UploadFile = 
             status="ok",
         )
     except Exception:
-        logger.warning("event_logging_failed category=%s filename=%s", category, image.filename, exc_info=True)
+        logger.warning("event_logging_failed category=%s version=%s filename=%s", category, version, image.filename, exc_info=True)
 
-    logger.info("prediction_completed category=%s defective=%s", category, bool(pred))
-    return PredictResponse(defective=bool(pred), params=PredictParamsResponse(**params))
+    logger.info("prediction_completed category=%s version=%s defective=%s", category, version, bool(pred))
+    return PredictResponse(defective=bool(pred), params=PredictParamsResponse(**params), pred_probas=pred_probas)

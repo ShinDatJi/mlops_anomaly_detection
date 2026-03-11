@@ -1,110 +1,157 @@
-x-environment: &default-environment
-  CATEGORY: $CATEGORY
-  DATA_CLEAN_DB: $DATA_CLEAN_DB
-  DATA_TRAIN_DB: $DATA_TRAIN_DB
-  DATA_TEST_DB: $DATA_TEST_DB
-  DATA_TRAIN_DIR: $DATA_TRAIN_DIR
-  DATA_TEST_DIR: $DATA_TEST_DIR
-  DATA_TEST_PATCHING_DIR: $DATA_TEST_PATCHING_DIR
-  REPORTS_REPORT: $REPORTS_REPORT
-  REPORTS_MODEL: $REPORTS_MODEL
-  TRACKING_URI: $TRACKING_URI
+x-modeling-common: &modeling-common
+  working_dir: /app
+  image: anomaly-detection/modeling:latest
+  environment: &common-environment
+    CATEGORY: ${CATEGORY}
+    VERSION: ${VERSION}
+    DATA_CLEAN_DB: ${DATA_CLEAN_DB}
+    DATA_TRAIN_DB: ${DATA_TRAIN_DB}
+    DATA_TEST_DB: ${DATA_TEST_DB}
+    DATA_TRAIN_DIR: ${DATA_TRAIN_DIR}
+    DATA_TEST_DIR: ${DATA_TEST_DIR}
+    DATA_TEST_PATCHING_DIR: ${DATA_TEST_PATCHING_DIR}
+    REPORTS_CONFIG: ${REPORTS_CONFIG}
+    REPORTS_REPORT: ${REPORTS_REPORT}
+    REPORTS_MODEL: ${REPORTS_MODEL}
+    MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+    MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+    MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+  networks:
+    - mlflow
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    init-modeling:
+      condition: service_completed_successfully
 
 x-flags: &default-flags
   PYTHONUNBUFFERED: 1
   TF_CPP_MIN_LOG_LEVEL: 1
   GIT_PYTHON_REFRESH: silent
+  MPLCONFIGDIR: /tmp/matplotlib
 
 services:
-  modeling-setup:
-    container_name: modeling-setup
-    working_dir: /app
+  init-modeling:
+    image: anomaly-detection/modeling:latest
     build:
       context: ./apps/modeling/
-      target: modeling_setup
     volumes:
-      - $MODELS_PATH:/app/models:ro
+      - raw-data:/data
+    command: chown -R ${AIRFLOW_UID:-50000}:0 /data
+
+  load-initial-models:
+    <<: [*modeling-common]
+    command: .venv/bin/load_initial_models
+    volumes:
+      - ${MODELS_PATH}:/app/models:ro
     environment:
       <<: [*default-flags]
-      MODELS_PATH: models
-      MODELS_CONFIG: $MODELS_CONFIG
-      MODELS_REPORT: $MODELS_REPORT
-      MODELS_MODEL: $MODELS_MODEL
-      TRACKING_URI: $TRACKING_URI
-    networks:
-      - mlflow-network
+      MODELS_PATH: ./models
+      MODELS_CONFIG: ${MODELS_CONFIG}
+      MODELS_REPORT: ${MODELS_REPORT}
+      MODELS_MODEL: ${MODELS_MODEL}
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
 
-  modeling-preprocessing:
-    container_name: modeling-preprocessing-$CATEGORY
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_preprocessing
+  load-raw-data:
+    <<: [*modeling-common]
+    command: .venv/bin/load_raw_data
+    volumes:
+      - raw-data:/app/${S3_DATA_RAW_PATH}:rw
+      - ${DATA_PATH}:/app/data/processed:rw
+      - ${REPORTS_LOADING_PATH}:/app/reports:rw
+    environment:
+      <<: [*common-environment, *default-flags]
+      DATA_PATH: ./data/processed
+      REPORTS_PATH: ./reports
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_DATA_FILE: ${S3_DATA_FILE}
+    networks:
+      - minio
+      - mlflow
+
+  load-config:
+    <<: [*modeling-common]
+    command: .venv/bin/load_config
+    volumes:
+      - ${CONFIG_FILE}:/app/config.json:rw
+      - ${REPORTS_PATH}:/app/reports:rw
+    environment:
+      <<: [*common-environment, *default-flags]
+      CONFIG_FILE: config.json
+      CONFIG_FROM_MODEL_REGISTRY: ${CONFIG_FROM_MODEL_REGISTRY}
+      CONFIG_FROM_MODEL_REGISTRY_CATEGORY: ${CONFIG_FROM_MODEL_REGISTRY_CATEGORY}
+      CONFIG_FROM_MODEL_REGISTRY_VERSION: ${CONFIG_FROM_MODEL_REGISTRY_VERSION}
+      CONFIG_FROM_MODEL_REGISTRY_ALIAS: ${CONFIG_FROM_MODEL_REGISTRY_ALIAS}
+      REPORTS_PATH: ./reports
+
+  preprocess-data:
+    <<: [*modeling-common]
+    command: .venv/bin/preprocess_data
     configs:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:rw
-      - $REPORTS_PREPROCESSING_PATH:/app/reports:rw
+      - raw-data:/app/${S3_DATA_RAW_PATH}:ro
+      - ${DATA_PATH}:/app/data/processed:rw
+      - ${REPORTS_LOADING_PATH}:/app/reports_loading:ro
+      - ${REPORTS_PREPROCESSING_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_PREPROCESSING_PATH: reports
-    networks:
-      - mlflow-network
+      DATA_PATH: ./data/processed
+      REPORTS_LOADING_PATH: ./reports_loading
+      REPORTS_PREPROCESSING_PATH: ./reports
 
-  modeling-training:
-    container_name: modeling-training-$CATEGORY
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_training
+  train-model:
+    <<: [*modeling-common]
+    command: .venv/bin/train_model
     configs:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_PATH:/app/data/processed:ro
-      - $REPORTS_PREPROCESSING_PATH:/app/reports_preprocessing:ro
-      - $REPORTS_TRAINING_PATH:/app/reports:rw
+      - ${DATA_PATH}:/app/data/processed:ro
+      - ${REPORTS_PREPROCESSING_PATH}:/app/reports_preprocessing:ro
+      - ${REPORTS_TRAINING_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_PREPROCESSING_PATH: reports_preprocessing
-      REPORTS_TRAINING_PATH: reports
-      MAX_EPOCHS: $MAX_EPOCHS
-    networks:
-      - mlflow-network
+      DATA_PATH: ./data/processed
+      REPORTS_PREPROCESSING_PATH: ./reports_preprocessing
+      REPORTS_TRAINING_PATH: ./reports
+      MAX_EPOCHS: ${MAX_EPOCHS}
 
-  modeling-evaluation:
-    container_name: modeling-evaluation-$CATEGORY
-    working_dir: /app
-    build:
-      context: ./apps/modeling/
-      target: modeling_evaluation
+  evaluate-model:
+    <<: [*modeling-common]
+    command: .venv/bin/evaluate_model
     configs:
       - source: config
         target: /app/config.json
     volumes:
-      - $DATA_RAW_PATH:/app/$VIRTUAL_DATA_RAW_PATH:ro
-      - $DATA_PATH:/app/data/processed:ro
-      - $REPORTS_TRAINING_PATH:/app/reports_training:ro
-      - $REPORTS_EVALUATION_PATH:/app/reports:rw
+      - raw-data:/app/${S3_DATA_RAW_PATH}:ro
+      - ${DATA_PATH}:/app/data/processed:ro
+      - ${REPORTS_TRAINING_PATH}:/app/reports_training:ro
+      - ${REPORTS_EVALUATION_PATH}:/app/reports:rw
     environment:
-      <<: [*default-environment, *default-flags]
+      <<: [*common-environment, *default-flags]
       CONFIG_FILE: config.json
-      DATA_PATH: data/processed
-      REPORTS_TRAINING_PATH: reports_training
-      REPORTS_EVALUATION_PATH: reports
-    networks:
-      - mlflow-network
+      DATA_PATH: ./data/processed
+      REPORTS_TRAINING_PATH: ./reports_training
+      REPORTS_EVALUATION_PATH: ./reports
 
 configs:
   config:
-    file: $CONFIG_FILE
+    file: ${REPORTS_PATH}/${REPORTS_CONFIG}
 
 networks:
-  mlflow-network:
+  mlflow:
     external: true
+  minio:
+    external: true
+
+volumes:
+  raw-data:
+    name: raw-data-${CATEGORY}-${VERSION}
