@@ -7,6 +7,7 @@ import keras.saving as saving
 import pandas as pd
 import os
 import glob
+import tensorflow as tf
 import mlflow
 import modeling.training.create_model as create_model
 import modeling.training.visualize_train as visualize_train
@@ -128,6 +129,8 @@ def main():
             label_mode = "binary",
             color_mode = "grayscale" if grayscale else "rgb"
         )
+        ds_train = ds_train.prefetch(tf.data.AUTOTUNE)
+        ds_val = ds_val.prefetch(tf.data.AUTOTUNE)
     else:
         ds_train = image_dataset_from_directory(
             directory = train_path,
@@ -137,7 +140,7 @@ def main():
             shuffle = True,
             label_mode = "binary",
             color_mode = "grayscale" if grayscale else "rgb"
-        )
+        ).prefetch(tf.data.AUTOTUNE)
         ds_val = image_dataset_from_directory(
             directory = test_path,
             image_size=(img_size, img_size),
@@ -146,7 +149,7 @@ def main():
             shuffle = True,
             label_mode = "binary",
             color_mode = "grayscale" if grayscale else "rgb"
-        )
+        ).prefetch(tf.data.AUTOTUNE)
 
     epoch_sum = 0
 
