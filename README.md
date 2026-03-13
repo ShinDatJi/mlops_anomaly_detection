@@ -10,13 +10,13 @@ The goal is to simulate a real world application for industrial anomaly detectio
 The project is designed to accept multiple projects from multiple customers. Internally a customer is a category and a project of a customer is a training data version for a specific category. So, the training pipeline, model configuration and provided model with the endpoint is specific to a category and data version.
 As specific to anomaly detection the final model of a customer's project is fixed and not automatically adapted to new data. If the data on the customer side changes, the customer has to provide new training data for a new project.
 
-![project overview](/demo/figures/architecture.png)
+![project overview](/demo/figures/introduction.png)
 
 ## Architecture
 
 The project is designed to be deployed on multiple servers for load balancing and separation of concern. Each sub project has its own docker compose stack organized into separate folders: ```apps/``` with it's own environment configuration. For easy development setup a default.env is provided in the root directory assuming all docker compose projects are running on the same machine.
 
-![global architecture](/demo/figures/introduction.png)
+![global architecture](/demo/figures/architecture.png)
 
 * Training data: public MVTec AD dataset (industrial anomaly detection)
 * Data storage: MinIO
