@@ -190,16 +190,11 @@ Command: `make start-mlflow`
 
 Experiment tracking:
 
-- loading-{CATEGORY}_{VERSION}
-  => params, metrics and statistical plots from loading raw data
-- preprocessing-{CATEGORY}_{VERSION}
-  => params and metrics from preprocessing (patching) of images
-- training-{CATEGORY}_{VERSION}
-  => params, metrics and plots from model training
-- evaluation-{CATEGORY}_{VERSION}
-  => params, metrics, plots and model from model evaluation
-- initial-{CATEGORY}
-  => params, metrics and model from initial pre-trained models provided for each category
+- loading-{CATEGORY}_{VERSION} => params, metrics and statistical plots from loading raw data
+- preprocessing-{CATEGORY}_{VERSION} => params and metrics from preprocessing (patching) of images
+- training-{CATEGORY}_{VERSION} => params, metrics and plots from model training
+- evaluation-{CATEGORY}_{VERSION} => params, metrics, plots and model from model evaluation
+- initial-{CATEGORY} => params, metrics and model from initial pre-trained models provided for each category
 
 Model registry:
 
@@ -227,37 +222,28 @@ Notes:
 
 Administration DAGs:
 
-- init-airflow
-  => creates data and modeling dags for an exemplary project (category/version)
-- add-category
-  => creates data and modeling dags for a new project (category/version)
+- init-airflow => creates data and modeling dags for an exemplary project (category/version)
+- add-category => creates data and modeling dags for a new project (category/version)
 
 Data DAGs:
 
-- ingest-data_{CATEGORY}_{VERSION}
-  => ingests new data
+- ingest-data_{CATEGORY}_{VERSION} => ingests new data
 
 Modeling DAGs:
 
-- load-config_{CATEGORY}_{VERSION}
-  => loads the modeling configuration
-- load-raw-data_{CATEGORY}_{VERSION}
-  => loads the raw data
-- preprocess-data_{CATEGORY}_{VERSION}
-  => preprocesses the data
-- train-model_{CATEGORY}_{VERSION}
-  => trains the model
-- evaluate-model_{CATEGORY}_{VERSION}
-  => evaluates the model
+- load-config_{CATEGORY}_{VERSION} => loads the modeling configuration
+- load-raw-data_{CATEGORY}_{VERSION} => loads the raw data
+- preprocess-data_{CATEGORY}_{VERSION} => preprocesses the data
+- train-model_{CATEGORY}_{VERSION} => trains the model
+- evaluate-model_{CATEGORY}_{VERSION} => evaluates the model
 
 Composite DAGs:
 
-- end-to-end_{CATEGORY}_{VERSION}
-  => runs the whole data and modeling pipeline in the right order
+- end-to-end_{CATEGORY}_{VERSION} => runs the whole data and modeling pipeline in the right order
 
 ### Data
 
-Data is used to validate the raw data, create a database and upload the data to MinIO.
+Data is used for validating the raw data, creating a database, and uploading the data to MinIO.
 
 Command: `make run-data-ingest-data`
 
@@ -288,14 +274,10 @@ Notes:
 The general flow should be:
 
 - load the initial config (e.g. use the provided default config)
-- load the raw data
-  => inspecting the plots to decide on preprocessing parameters
-- preprocess the data
-  => inspect the metrics produced by patching on anomaly coverage / patch count => reiterate
-- train the model
-  => inspect the plots for over-fitting or under-fitting => reiterate
-- evaluate the model
-  => inspect the plots and metrics to define the prediction threshold
+- load the raw data => inspecting the plots to decide on preprocessing parameters
+- preprocess the data => inspect the metrics produced by patching on anomaly coverage / patch count => reiterate
+- train the model => inspect the plots for over-fitting or under-fitting => reiterate
+- evaluate the model => inspect the plots and metrics to define the prediction threshold
 
 #### Modeling Scripts
 
