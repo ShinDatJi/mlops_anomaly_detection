@@ -14,11 +14,15 @@ def load_model(category: str, version: str) -> None:
     mlflow.set_tracking_uri(tracking_uri)
     client = MlflowClient()
 
-    model_version = client.get_model_version_by_alias(f"{category}_{version}", "champion")
-    run_id = model_version.run_id
-    run = client.get_run(run_id)
-    params = run.data.params
-    model = mlflow.keras.load_model(f"models:/{category}_{version}@champion")
+    try:
+        model_version = client.get_model_version_by_alias(f"{category}_{version}", "champion")
+        run_id = model_version.run_id
+        run = client.get_run(run_id)
+        params = run.data.params
+        model = mlflow.keras.load_model(f"models:/{category}_{version}@champion")
+    except Exception as e:
+        raise ValueError("Unable to load model")
+    
     if run_id not in models:
         models[run_id] = model
         models_params[run_id] = params

@@ -8,7 +8,6 @@ services:
     ports:
       - ${PREDICTION_PORT}:8000
     volumes:
-      - ${MODELS_PATH}:/app/models:ro
       - ${MONITORING_REPORTS_PATH}:/app/reports/monitoring:rw
     environment:
       - MODELS_DIR=/app/models
