@@ -150,3 +150,6 @@ stop-all:
 
 start-demo:
 	uv run --env-file .env --project ./demo/ streamlit run demo/src/app.py
+
+start-tests:
+	uv run --env-file .env --project ./tests/ pytest -s -v ./tests/test_prediction.py

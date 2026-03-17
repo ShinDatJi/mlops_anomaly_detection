@@ -154,7 +154,7 @@ if [[ -z "${API_KEY}" ]]; then
   exit 1
 fi
 
-response="$(curl -sS -w $'\n%{http_code}' -X POST "${API_URL}/predict/${category}" \
+response="$(curl -sS -w $'\n%{http_code}' -X POST "${API_URL}/predict/${category}/pretrained" \
   -H "X-API-Key: ${API_KEY}" \
   -F "image=@${image_path}")"
 
