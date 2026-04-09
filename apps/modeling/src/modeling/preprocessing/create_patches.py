@@ -63,8 +63,8 @@ def create_patches(
                     patch = rot_sub(patch)
                 if random_rot_sub or random_trans_sub:
                     patch = patch.numpy()
-                file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
-                cv2.imwrite(os.path.join(path0, file), patch)
+                file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.jpg"
+                cv2.imwrite(os.path.join(path0, file), patch, [cv2.IMWRITE_JPEG_QUALITY, 95])
                 count_0 += 1
     print("  0 patches:", count_0)
 
@@ -115,7 +115,6 @@ def create_patches(
                 for p_c in range(width_cropping, patches - width_cropping):
                     c = start + p_c * step
                     patch = img[r:r + patch_size_overlap, c:c + patch_size_overlap, :]
-                    patch.resize()
                     patch = cv2.resize(patch, dsize=(patch_size, patch_size))
                     mask_patch = mask[r:r + patch_size_overlap, c:c + patch_size_overlap, :]
                     if fast_patching and not(keep_all or (keep_good and count == 0)) and mask_patch.mean() == 0:
@@ -132,13 +131,13 @@ def create_patches(
                         patch = patch.numpy()
                         mask_patch = mask_patch.numpy()
                     if mask_patch.mean() >= threshold: 
-                        file = f"{str(i).zfill(4)}_{str(count).zfill(3)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
-                        cv2.imwrite(os.path.join(path1, file), patch)
+                        file = f"{str(i).zfill(4)}_{str(count).zfill(3)}_{str(r).zfill(4)}_{str(c).zfill(4)}.jpg"
+                        cv2.imwrite(os.path.join(path1, file), patch, [cv2.IMWRITE_JPEG_QUALITY, 95])
                         count_1 += 1
                         stats[df.loc[i].anomaly] += 1
                     elif keep_good and count == 0 and mask_patch.mean() == 0:
-                        file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.png"
-                        cv2.imwrite(os.path.join(path0, file), patch)
+                        file = f"{str(i).zfill(4)}_{str(r).zfill(4)}_{str(c).zfill(4)}.jpg"
+                        cv2.imwrite(os.path.join(path0, file), patch, [cv2.IMWRITE_JPEG_QUALITY, 95])
                         count_0 += 1
         if keep_good and count == 0:
             print("  0 patches:", count_0)

@@ -104,7 +104,6 @@ def plot_stat_images(df, reports_path):
 
     # good var 
     plt.subplot(rows, cols, cols * 2 + 1, frameon=False)
-    img_mean_good = calc_mean(df3[(df3.subset == "test") & (df3.anomaly == "good")].file, img_size)
     img_std_good = calc_var(df3[(df3.subset == "test") & (df3.anomaly == "good")].file, img_size, img_mean_good)
     show_image(img_std_good, None, "variance")
 
@@ -122,7 +121,6 @@ def plot_stat_images(df, reports_path):
 
         # anomaly var
         plt.subplot(rows, cols, cols * 2 + c + 2, frameon=False)
-        img_mean = calc_mean(df3[(df3.subset == "test") & (df3.anomaly == anomaly)].file, img_size)
         img_std = calc_var(df3[(df3.subset == "test") & (df3.anomaly == anomaly)].file, img_size, img_mean)
         show_image(img_std)
 
